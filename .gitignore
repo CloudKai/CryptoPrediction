@@ -20,6 +20,13 @@
 # production
 /build
 
+# python backend
+/backend/.venv
+/backend/artifacts/*
+!/backend/artifacts/.gitkeep
+**/__pycache__/
+*.pyc
+
 # misc
 .DS_Store
 *.pem
