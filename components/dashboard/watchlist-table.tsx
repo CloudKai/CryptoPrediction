@@ -9,14 +9,25 @@ type WatchlistTableProps = {
   rows: WatchlistRow[];
   selectedSymbol: string;
   onSelect: (symbol: string) => void;
+  headerAction?: React.ReactNode;
 };
 
-export function WatchlistTable({ rows, selectedSymbol, onSelect }: WatchlistTableProps) {
+export function WatchlistTable({
+  rows,
+  selectedSymbol,
+  onSelect,
+  headerAction,
+}: WatchlistTableProps) {
   return (
     <div className="glass-panel overflow-hidden rounded-2xl">
       <div className="border-b border-white/10 px-4 py-3">
-        <h3 className="font-semibold text-white">Watchlist</h3>
-        <p className="text-xs text-slate-400">Compare all tracked symbols in one view.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-white">Watchlist</h3>
+            <p className="text-xs text-slate-400">Compare all tracked symbols in one view.</p>
+          </div>
+          {headerAction ? <div className="w-full max-w-sm">{headerAction}</div> : null}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
@@ -69,6 +80,13 @@ export function WatchlistTable({ rows, selectedSymbol, onSelect }: WatchlistTabl
                 </tr>
               );
             })}
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-400">
+                  No tracked coins match your search.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

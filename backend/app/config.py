@@ -97,7 +97,7 @@ def load_settings() -> Settings:
         or "wss://stream.binance.com:9443",
         tracked_symbols=tracked_symbols,
         tracked_intervals=tracked_intervals,
-        bootstrap_candles_limit=max(100, _to_int("BOOTSTRAP_CANDLES_LIMIT", 600)),
+        bootstrap_candles_limit=max(100, _to_int("BOOTSTRAP_CANDLES_LIMIT", 365)),
         prediction_history_limit=max(50, _to_int("PREDICTION_HISTORY_LIMIT", 200)),
         model_min_candles=max(50, _to_int("MODEL_MIN_CANDLES", 120)),
         training_candles_limit=max(400, _to_int("TRAINING_CANDLES_LIMIT", 1200)),

@@ -1,5 +1,11 @@
-import { DEFAULT_INTERVAL, INTERVAL_TO_MS, SUPPORTED_INTERVALS } from "@/lib/constants";
-import type { Interval } from "@/types/market";
+import {
+  CHART_RANGE_OPTIONS,
+  DEFAULT_CHART_RANGE,
+  DEFAULT_INTERVAL,
+  INTERVAL_TO_MS,
+  SUPPORTED_INTERVALS,
+} from "@/lib/constants";
+import type { ChartRange, Interval } from "@/types/market";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -19,6 +25,24 @@ export function parseInterval(rawValue: string | null | undefined): Interval {
     return rawValue as Interval;
   }
   return DEFAULT_INTERVAL;
+}
+
+export function parseChartRange(rawValue: string | null | undefined): ChartRange {
+  if (!rawValue) return DEFAULT_CHART_RANGE;
+
+  const supportedRange = CHART_RANGE_OPTIONS.find((option) => option.value === rawValue);
+  if (supportedRange) return supportedRange.value;
+
+  // Backward compatibility for earlier links that used interval=... or range=all.
+  if (rawValue === "all") return "1y";
+  if (rawValue === "1m") return "live";
+  if (rawValue === "5m") return "1d";
+  if (rawValue === "15m") return "1w";
+  if (rawValue === "1h") return "1w";
+  if (rawValue === "4h") return "1mo";
+  if (rawValue === "1d") return "1y";
+
+  return DEFAULT_CHART_RANGE;
 }
 
 export function intervalToMs(interval: Interval) {
@@ -73,4 +97,17 @@ export function formatTimestamp(input: string) {
     month: "short",
     day: "2-digit",
   }).format(new Date(input));
+}
+
+export function formatNewsTimestamp(input: string) {
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return input;
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }

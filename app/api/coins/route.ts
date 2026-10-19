@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
 
-import { getTrackedCoins } from "@/lib/mock/market";
+import {
+  hasBackendApiBaseUrl,
+  missingBackendApiResponse,
+} from "@/lib/server/backend-config";
 import { maybeProxyRequest } from "@/lib/server/proxy";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!hasBackendApiBaseUrl()) {
+    return missingBackendApiResponse();
+  }
+
   const proxied = await maybeProxyRequest("/api/coins");
   if (proxied) return proxied;
 
   return NextResponse.json(
     {
-      coins: getTrackedCoins(),
+      error: "No data",
+      message: "Backend API proxy is configured but the request failed.",
     },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    },
+    { status: 502, headers: { "Cache-Control": "no-store" } },
   );
 }

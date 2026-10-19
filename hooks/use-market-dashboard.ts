@@ -10,6 +10,7 @@ import {
 import { createMarketStreamAdapter } from "@/lib/stream/adapter";
 import type {
   Candle,
+  ChartRange,
   Interval,
   MarketStreamEvent,
   Prediction,
@@ -29,7 +30,34 @@ const INITIAL_STATE: MarketDashboardState = {
   history: [],
 };
 
-export function useMarketDashboard(symbol: string, interval: Interval) {
+function sortAndDedupeCandles(candles: Candle[]) {
+  const byTime = new Map<number, Candle>();
+  for (const candle of candles) {
+    byTime.set(candle.time, candle);
+  }
+
+  return Array.from(byTime.values()).sort((a, b) => a.time - b.time);
+}
+
+function dedupePredictionHistory(entries: PredictionHistoryEntry[]) {
+  const byId = new Map<string, PredictionHistoryEntry>();
+  for (const entry of entries) {
+    byId.set(entry.id, entry);
+  }
+
+  return Array.from(byId.values()).sort(
+    (left, right) =>
+      new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  );
+}
+
+export function useMarketDashboard(
+  symbol: string,
+  range: ChartRange,
+  interval: Interval,
+  historyLimit: number,
+) {
+  const predictionInterval: Interval = "15m";
   const [state, setState] = useState<MarketDashboardState>(INITIAL_STATE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,15 +75,15 @@ export function useMarketDashboard(symbol: string, interval: Interval) {
       try {
         const [historyResponse, predictionResponse, predictionHistoryResponse] =
           await Promise.all([
-            getMarketHistory(symbol, interval, 500, abortController.signal),
-            getLatestPrediction(symbol, interval, abortController.signal),
-            getPredictionHistory(symbol, interval, 25, abortController.signal),
+            getMarketHistory(symbol, interval, historyLimit, abortController.signal, range),
+            getLatestPrediction(symbol, predictionInterval, abortController.signal, range),
+            getPredictionHistory(symbol, predictionInterval, 100, abortController.signal, range),
           ]);
 
         setState({
           candles: historyResponse.candles,
           prediction: predictionResponse.prediction,
-          history: predictionHistoryResponse.history,
+          history: dedupePredictionHistory(predictionHistoryResponse.history),
         });
       } catch (loadError) {
         if (!abortController.signal.aborted) {
@@ -73,40 +101,38 @@ export function useMarketDashboard(symbol: string, interval: Interval) {
     return () => {
       abortController.abort();
     };
-  }, [symbol, interval]);
+  }, [historyLimit, range, symbol, interval]);
 
   const handleStreamEvent = useEffectEvent((event: MarketStreamEvent) => {
     if (event.symbol !== symbol || event.interval !== interval) return;
 
     setLastStreamEvent(event);
     setState((previousState) => {
-      const nextCandles = [...previousState.candles];
-      const latestCandle = nextCandles[nextCandles.length - 1];
-      if (latestCandle && latestCandle.time === event.candle.time) {
-        nextCandles[nextCandles.length - 1] = event.candle;
-      } else {
-        nextCandles.push(event.candle);
-      }
-
-      const boundedCandles = nextCandles.slice(-500);
+      const boundedCandles = sortAndDedupeCandles([
+        ...previousState.candles,
+        event.candle,
+      ]).slice(-historyLimit);
+      const forecastStart = event.prediction.forecastStartAt ?? event.prediction.updatedAt;
       const nextHistoryEntry: PredictionHistoryEntry = {
-        id: `${event.symbol}-${event.interval}-${event.candle.time}`,
+        id: `${event.symbol}-15m-${forecastStart}`,
         symbol: event.symbol,
-        interval: event.interval,
+        interval: "15m",
         direction: event.prediction.direction,
+        actualDirection: event.prediction.actualDirection ?? null,
         confidence: event.prediction.confidence,
-        createdAt: event.prediction.updatedAt,
+        createdAt: forecastStart,
+        resolvedAt: event.prediction.resolvedAt ?? null,
         price: event.prediction.price,
       };
       const dedupedHistory = [
         nextHistoryEntry,
         ...previousState.history.filter((entry) => entry.id !== nextHistoryEntry.id),
-      ].slice(0, 25);
+      ];
 
       return {
         candles: boundedCandles,
         prediction: event.prediction,
-        history: dedupedHistory,
+        history: dedupePredictionHistory(dedupedHistory).slice(0, 100),
       };
     });
   });
@@ -116,7 +142,7 @@ export function useMarketDashboard(symbol: string, interval: Interval) {
   });
 
   useEffect(() => {
-    const unsubscribe = adapterRef.current.subscribe(symbol, interval, {
+    const unsubscribe = adapterRef.current.subscribe(symbol, range, interval, {
       onEvent: handleStreamEvent,
       onStatus: handleStatus,
     });
@@ -124,7 +150,7 @@ export function useMarketDashboard(symbol: string, interval: Interval) {
     return () => {
       unsubscribe();
     };
-  }, [symbol, interval]);
+  }, [range, symbol, interval]);
 
   return {
     ...state,

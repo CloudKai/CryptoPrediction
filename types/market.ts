@@ -1,4 +1,6 @@
-export type Interval = "1m" | "5m" | "15m";
+export type Interval = "1m" | "5m" | "15m" | "1h" | "4h" | "1d";
+
+export type ChartRange = "live" | "1d" | "1w" | "1mo" | "1y";
 
 export type PredictionDirection = "UP" | "DOWN";
 
@@ -34,6 +36,10 @@ export type Prediction = {
   price: number;
   updatedAt: string;
   modelStatus: ModelStatus;
+  forecastStartAt?: string;
+  forecastEndAt?: string;
+  actualDirection?: PredictionDirection | null;
+  resolvedAt?: string | null;
 };
 
 export type PredictionHistoryEntry = {
@@ -41,8 +47,10 @@ export type PredictionHistoryEntry = {
   symbol: string;
   interval: Interval;
   direction: PredictionDirection;
+  actualDirection?: PredictionDirection | null;
   confidence: number;
   createdAt: string;
+  resolvedAt?: string | null;
   price: number;
 };
 
@@ -55,6 +63,16 @@ export type WatchlistRow = {
   direction: PredictionDirection;
   confidence: number;
   updatedAt: string;
+};
+
+export type NewsItem = {
+  id: string;
+  headline: string;
+  source: string;
+  publishedAt: string;
+  summary: string;
+  url: string;
+  imageUrl?: string | null;
 };
 
 export type MarketStreamEvent = {
@@ -84,3 +102,31 @@ export type PredictionHistoryResponse = {
   interval: Interval;
   history: PredictionHistoryEntry[];
 };
+
+export type NewsResponse = {
+  items: NewsItem[];
+};
+
+export type CryptoNewsProxyResponse =
+  | {
+      ok: true;
+      source: "newsdata.io";
+      status: number;
+      syncedAt: string;
+      refreshedFromUpstream: boolean;
+      market: NewsItem[];
+      crypto: NewsItem[];
+      tech: NewsItem[];
+      warning?: string;
+    }
+  | {
+      ok: false;
+      source: "newsdata.io";
+      status: number;
+      syncedAt: string;
+      refreshedFromUpstream: boolean;
+      market: NewsItem[];
+      crypto: NewsItem[];
+      tech: NewsItem[];
+      error: string;
+    };

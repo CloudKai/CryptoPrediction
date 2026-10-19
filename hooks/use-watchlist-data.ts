@@ -20,9 +20,11 @@ const INITIAL_STATE: WatchlistState = {
 
 export function useWatchlistData(interval: Interval, lastStreamEvent: MarketStreamEvent | null) {
   const [state, setState] = useState<WatchlistState>(INITIAL_STATE);
-  const candlesPerDay = useMemo(() => Math.max(96, Math.round(86_400_000 / intervalToMs(interval))), [
-    interval,
-  ]);
+  const candlesPerDay = useMemo(
+    () => Math.max(1, Math.ceil(86_400_000 / intervalToMs(interval))),
+    [interval],
+  );
+  const candlesNeededForChange = useMemo(() => Math.max(2, candlesPerDay + 1), [candlesPerDay]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -41,7 +43,7 @@ export function useWatchlistData(interval: Interval, lastStreamEvent: MarketStre
         const rows = await Promise.all(
           coinsResponse.coins.map(async (coin) => {
             const [history, predictionResponse] = await Promise.all([
-              getMarketHistory(coin.symbol, interval, candlesPerDay + 1, abortController.signal),
+              getMarketHistory(coin.symbol, interval, candlesNeededForChange, abortController.signal),
               getLatestPrediction(coin.symbol, interval, abortController.signal),
             ]);
 
@@ -49,7 +51,7 @@ export function useWatchlistData(interval: Interval, lastStreamEvent: MarketStre
             const latest = candles[candles.length - 1];
             const past = candles[0] ?? latest;
             const change24h = ((latest.close - past.close) / Math.max(past.close, 0.00001)) * 100;
-            const volume24h = candles.reduce((sum, candle) => sum + candle.volume, 0);
+            const volume24h = candles.slice(-candlesPerDay).reduce((sum, candle) => sum + candle.volume, 0);
 
             return {
               symbol: coin.symbol,
@@ -90,7 +92,7 @@ export function useWatchlistData(interval: Interval, lastStreamEvent: MarketStre
       abortController.abort();
       window.clearInterval(refreshInterval);
     };
-  }, [interval, candlesPerDay]);
+  }, [candlesNeededForChange, candlesPerDay, interval]);
 
   const rows = useMemo(() => {
     if (!lastStreamEvent) return state.rows;

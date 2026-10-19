@@ -3,46 +3,42 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { AnimatedNumber } from "@/components/dashboard/animated-number";
 import { CandlestickChartPanel } from "@/components/dashboard/candlestick-chart-panel";
-import { CoinSelector } from "@/components/dashboard/coin-selector";
-import { ConfidenceMeter } from "@/components/dashboard/confidence-meter";
+import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { IntervalSelector } from "@/components/dashboard/interval-selector";
-import { PredictionBadge } from "@/components/dashboard/prediction-badge";
 import { PredictionHistoryTable } from "@/components/dashboard/prediction-history-table";
 import { SkeletonCard } from "@/components/dashboard/skeleton-card";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { StreamStatus } from "@/components/dashboard/stream-status";
 import { WatchlistTable } from "@/components/dashboard/watchlist-table";
 import { Sidebar } from "@/components/layout/sidebar";
-import { DEFAULT_SYMBOL, TRACKED_COINS } from "@/lib/constants";
-import { getCoins } from "@/lib/api/client";
 import { useMarketDashboard } from "@/hooks/use-market-dashboard";
 import { useWatchlistData } from "@/hooks/use-watchlist-data";
+import { getCoins } from "@/lib/api/client";
+import { CHART_RANGE_TO_CONFIG, TRACKED_COINS } from "@/lib/constants";
 import {
-  cn,
-  formatCompactNumber,
-  formatPercent,
-  formatPrice,
-  formatTimestamp,
   toSymbolDisplay,
 } from "@/lib/utils";
-import type { Coin, Interval } from "@/types/market";
+import type { ChartRange, Coin } from "@/types/market";
 
 type DashboardClientProps = {
   symbol: string;
-  interval: Interval;
+  range: ChartRange;
+  view?: "overview" | "monitor";
 };
 
-export function DashboardClient({ symbol, interval }: DashboardClientProps) {
+export function DashboardClient({
+  symbol,
+  range,
+  view = "monitor",
+}: DashboardClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [coins, setCoins] = useState<Coin[]>(TRACKED_COINS);
-
-  const { candles, prediction, history, loading, error, streamStatus, lastStreamEvent } =
-    useMarketDashboard(symbol, interval);
-  const watchlist = useWatchlistData(interval, lastStreamEvent);
+  const [watchlistQuery, setWatchlistQuery] = useState("");
+  const rangeConfig = CHART_RANGE_TO_CONFIG[range];
+  const { candles, prediction, history, loading, error, lastStreamEvent } =
+    useMarketDashboard(symbol, range, rangeConfig.interval, rangeConfig.historyLimit);
+  const watchlist = useWatchlistData(rangeConfig.interval, lastStreamEvent);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,146 +53,112 @@ export function DashboardClient({ symbol, interval }: DashboardClientProps) {
     [coins, symbol],
   );
 
-  const latestCandle = candles[candles.length - 1];
-  const previousCandle = candles[candles.length - 2] ?? latestCandle;
-  const candleChangePct = latestCandle
-    ? ((latestCandle.close - previousCandle.close) / Math.max(previousCandle.close, 0.00001)) * 100
-    : 0;
+  const latestCandle = candles[candles.length - 1] ?? null;
+  const previousCandle = candles[candles.length - 2] ?? null;
+  const filteredWatchlistRows = useMemo(() => {
+    const normalizedQuery = watchlistQuery.trim().toLowerCase();
+    if (!normalizedQuery) return watchlist.rows;
+
+    return watchlist.rows.filter((row) => {
+      const shortSymbol = row.symbol.replace("USDT", "").toLowerCase();
+      const fullSymbol = row.symbol.toLowerCase();
+      const displayName = row.displayName.toLowerCase();
+      return (
+        shortSymbol.includes(normalizedQuery) ||
+        fullSymbol.includes(normalizedQuery) ||
+        displayName.includes(normalizedQuery)
+      );
+    });
+  }, [watchlist.rows, watchlistQuery]);
 
   const handleSymbolChange = (nextSymbol: string) => {
-    router.push(`/dashboard/${nextSymbol}?interval=${interval}`);
+    router.push(`/dashboard/${nextSymbol}?range=${range}`, { scroll: false });
   };
 
-  const handleIntervalChange = (nextInterval: Interval) => {
-    router.push(`${pathname}?interval=${nextInterval}`);
+  const handleIntervalChange = (nextRange: ChartRange) => {
+    router.push(`${pathname}?range=${nextRange}`, { scroll: false });
   };
 
-  const modelTone =
-    prediction?.modelStatus === "ONLINE"
-      ? "text-emerald-200 bg-emerald-500/15 border-emerald-300/30"
-      : prediction?.modelStatus === "SYNCING"
-        ? "text-amber-200 bg-amber-500/15 border-amber-300/30"
-        : "text-rose-200 bg-rose-500/15 border-rose-300/30";
+  const overviewHref =
+    `/?range=${range}`;
+  const monitorHref = `/dashboard/${symbol}?range=${range}`;
 
   return (
-    <div className="mx-auto grid w-full max-w-[1600px] gap-6 px-4 py-6 lg:grid-cols-[260px_1fr] lg:px-6">
-      <Sidebar
-        coins={coins}
-        selectedSymbol={symbol}
-        streamStatus={streamStatus}
-        onSelect={handleSymbolChange}
+    <div className="relative min-h-screen bg-slate-950 text-slate-100">
+      <div className="pointer-events-none absolute inset-0 opacity-75">
+        <div className="absolute left-0 top-0 h-[520px] w-[520px] rounded-full bg-cyan-500/16 blur-[120px]" />
+        <div className="absolute bottom-0 right-0 h-[460px] w-[460px] rounded-full bg-blue-500/12 blur-[120px]" />
+      </div>
+
+      <DashboardTopBar
+        activeTab={view === "overview" ? "overview" : "monitor"}
+        overviewHref={overviewHref}
+        monitorHref={monitorHref}
       />
 
-      <main className="space-y-6">
-        <header className="glass-panel rounded-2xl p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Live dashboard</p>
-              <h1 className="mt-1 text-2xl font-semibold text-white">
-                {selectedCoin?.displayName ?? DEFAULT_SYMBOL} · {toSymbolDisplay(symbol)}
-              </h1>
-              <p className="mt-1 text-sm text-slate-400">
-                Historical candles from REST snapshots and live updates from backend stream.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <StreamStatus status={streamStatus} />
-              {prediction ? (
-                <span className={cn("rounded-full border px-3 py-1 text-xs", modelTone)}>
-                  Model {prediction.modelStatus}
-                </span>
-              ) : null}
-            </div>
-          </div>
+      <div className="relative z-10 mx-auto w-full max-w-[1600px] space-y-6 px-4 py-6 lg:px-6">
+        <section id="overview" className="scroll-mt-32">
+          {view === "overview" ? (
+            <main className="space-y-6">
+              {error ? <EmptyState title="No data" description={error} /> : null}
 
-          <div className="mt-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <CoinSelector coins={coins} value={symbol} onChange={handleSymbolChange} />
-            <IntervalSelector value={interval} onChange={handleIntervalChange} />
-          </div>
-        </header>
-
-        {error ? (
-          <EmptyState
-            title="Dashboard data failed"
-            description="Unable to load market snapshot from the API. Please refresh or retry with a different symbol."
-          />
-        ) : null}
-
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {loading || !latestCandle || !prediction ? (
-            <>
-              <SkeletonCard className="h-28" />
-              <SkeletonCard className="h-28" />
-              <SkeletonCard className="h-28" />
-              <SkeletonCard className="h-28" />
-            </>
+              {watchlist.loading ? (
+                <SkeletonCard className="h-[520px]" />
+              ) : watchlist.error ? (
+                <EmptyState title="No data" description={watchlist.error} />
+              ) : (
+                <WatchlistTable
+                  rows={filteredWatchlistRows}
+                  selectedSymbol={symbol}
+                  onSelect={handleSymbolChange}
+                  headerAction={
+                    <label className="block">
+                      <span className="sr-only">Search watchlist</span>
+                      <input
+                        type="text"
+                        value={watchlistQuery}
+                        onChange={(event) => setWatchlistQuery(event.target.value)}
+                        placeholder="Search BTC, BNB, Bitcoin..."
+                        className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/40"
+                      />
+                    </label>
+                  }
+                />
+              )}
+            </main>
           ) : (
-            <>
-              <StatCard
-                label="Latest price"
-                value={<AnimatedNumber prefix="$" value={latestCandle.close} fractionDigits={3} />}
-                hint={
-                  <span className={candleChangePct >= 0 ? "text-emerald-300" : "text-rose-300"}>
-                    {formatPercent(candleChangePct, 3)} from prior candle
-                  </span>
-                }
+            <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+              <Sidebar
+                coins={coins}
+                selectedSymbol={symbol}
+                onSelect={handleSymbolChange}
               />
-              <StatCard
-                label="Prediction"
-                value={<PredictionBadge direction={prediction.direction} className="text-base" />}
-                hint={`Updated ${formatTimestamp(prediction.updatedAt)}`}
-              />
-              <StatCard
-                label="Confidence"
-                value={<AnimatedNumber value={prediction.confidence} fractionDigits={1} suffix="%" />}
-                hint={<ConfidenceMeter confidence={prediction.confidence} />}
-              />
-              <StatCard
-                label="Current candle volume"
-                value={<AnimatedNumber value={latestCandle.volume} fractionDigits={0} />}
-                hint={`High ${formatPrice(latestCandle.high)} · Low ${formatPrice(latestCandle.low)}`}
-              />
-            </>
+
+              <main className="space-y-6">
+                {error ? <EmptyState title="No data" description={error} /> : null}
+
+                <CandlestickChartPanel
+                  candles={candles}
+                  loading={loading}
+                  error={error}
+                  title={`${selectedCoin?.displayName ?? symbol} · ${toSymbolDisplay(symbol)}`}
+                  headerAction={<IntervalSelector value={range} onChange={handleIntervalChange} />}
+                  latestCandle={latestCandle}
+                  previousCandle={previousCandle}
+                  prediction={prediction}
+                />
+
+                {loading ? (
+                  <SkeletonCard className="h-[420px]" />
+                ) : (
+                  <PredictionHistoryTable rows={history} />
+                )}
+              </main>
+            </div>
           )}
         </section>
 
-        <CandlestickChartPanel candles={candles} loading={loading} error={error} />
-
-        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          {watchlist.loading ? (
-            <SkeletonCard className="h-[420px]" />
-          ) : watchlist.error ? (
-            <EmptyState title="Watchlist unavailable" description={watchlist.error} />
-          ) : (
-            <WatchlistTable
-              rows={watchlist.rows}
-              selectedSymbol={symbol}
-              onSelect={handleSymbolChange}
-            />
-          )}
-
-          {loading ? (
-            <SkeletonCard className="h-[420px]" />
-          ) : (
-            <PredictionHistoryTable rows={history} />
-          )}
-        </section>
-
-        <div className="glass-panel rounded-2xl p-4 text-xs text-slate-400">
-          <p>
-            Backend contract: <code>GET /api/coins</code>, <code>GET /api/market/:symbol/history</code>,{" "}
-            <code>GET /api/prediction/:symbol</code>, <code>GET /api/prediction/:symbol/history</code>,
-            and stream endpoint. This UI never talks to Binance directly.
-          </p>
-          <p className="mt-2">
-            24h watchlist volume is displayed as compact notation:{" "}
-            <span className="font-mono text-slate-200">
-              {watchlist.rows[0] ? formatCompactNumber(watchlist.rows[0].volume24h) : "--"}
-            </span>
-            .
-          </p>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

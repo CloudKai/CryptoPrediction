@@ -38,6 +38,10 @@ class Prediction(BaseModel):
     price: float
     updatedAt: str
     modelStatus: ModelStatus
+    forecastStartAt: str | None = None
+    forecastEndAt: str | None = None
+    actualDirection: PredictionDirection | None = None
+    resolvedAt: str | None = None
 
 
 class PredictionResponse(BaseModel):
@@ -49,8 +53,10 @@ class PredictionHistoryEntry(BaseModel):
     symbol: str
     interval: Interval
     direction: PredictionDirection
+    actualDirection: PredictionDirection | None = None
     confidence: float
     createdAt: str
+    resolvedAt: str | None = None
     price: float
 
 
@@ -64,6 +70,20 @@ class CandleHistoryResponse(BaseModel):
     symbol: str
     interval: Interval
     candles: list[Candle]
+
+
+class NewsItem(BaseModel):
+    id: str
+    headline: str
+    source: str
+    publishedAt: str
+    summary: str
+    url: str
+    imageUrl: str | None = None
+
+
+class NewsResponse(BaseModel):
+    items: list[NewsItem]
 
 
 class MarketStreamEvent(BaseModel):

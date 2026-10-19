@@ -8,21 +8,24 @@ Business logic (state, inference, streaming) lives in runtime.py.
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.config import load_settings
 from backend.app.constants import Interval
+from backend.app.news import CryptoNewsService
 from backend.app.runtime import MarketRuntime
 from backend.app.schemas import (
     CandleHistoryResponse,
     CoinsResponse,
+    NewsResponse,
     PredictionHistoryResponse,
     PredictionResponse,
 )
 
 settings = load_settings()
 runtime = MarketRuntime(settings=settings)
+news_service = CryptoNewsService()
 
 
 @asynccontextmanager
@@ -33,6 +36,7 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         await runtime.shutdown()
+        await news_service.close()
 
 
 app = FastAPI(
@@ -62,16 +66,27 @@ async def get_coins():
     return CoinsResponse(coins=await runtime.coins_response())
 
 
+@app.get("/api/news", response_model=NewsResponse)
+async def get_news(limit: int = Query(default=6, ge=1, le=12)):
+    try:
+        items = await news_service.fetch_latest(limit=limit)
+    except Exception as error:
+        raise HTTPException(status_code=503, detail=f"News unavailable: {error}") from error
+    return NewsResponse(items=items)
+
+
 @app.get("/api/market/{symbol}/history", response_model=CandleHistoryResponse)
 async def get_market_history(
     symbol: str,
     interval: str | None = Query(default=None),
-    limit: int = Query(default=500, ge=1, le=2000),
+    range: str | None = Query(default=None),
+    limit: int = Query(default=500, ge=1, le=4000),
 ):
     # Normalize inputs first so all callers get consistent symbol/interval behavior.
-    normalized_interval = runtime.validate_interval(interval)
+    normalized_interval = runtime.resolve_interval(interval, range)
+    resolved_limit = runtime.resolve_history_limit(limit, range)
     normalized_symbol = runtime.validate_symbol(symbol)
-    candles = await runtime.get_market_history(normalized_symbol, normalized_interval, limit)
+    candles = await runtime.get_market_history(normalized_symbol, normalized_interval, resolved_limit)
     return CandleHistoryResponse(symbol=normalized_symbol, interval=normalized_interval, candles=candles)
 
 
@@ -79,9 +94,10 @@ async def get_market_history(
 async def get_prediction(
     symbol: str,
     interval: str | None = Query(default=None),
+    range: str | None = Query(default=None),
 ):
-    # The runtime always returns the latest in-memory prediction snapshot.
-    normalized_interval = runtime.validate_interval(interval)
+    # Prediction is intentionally locked to the 15m forecast track.
+    normalized_interval: Interval = "15m"
     normalized_symbol = runtime.validate_symbol(symbol)
     prediction = await runtime.get_latest_prediction(normalized_symbol, normalized_interval)
     return PredictionResponse(prediction=prediction)
@@ -91,10 +107,11 @@ async def get_prediction(
 async def get_prediction_history(
     symbol: str,
     interval: str | None = Query(default=None),
+    range: str | None = Query(default=None),
     limit: int = Query(default=25, ge=1, le=200),
 ):
-    # History is produced from runtime updates and capped in-memory.
-    normalized_interval = runtime.validate_interval(interval)
+    # History follows the same 15m locked-forecast track used in latest prediction.
+    normalized_interval: Interval = "15m"
     normalized_symbol = runtime.validate_symbol(symbol)
     history = await runtime.get_prediction_history(normalized_symbol, normalized_interval, limit)
     return PredictionHistoryResponse(
@@ -109,6 +126,7 @@ async def market_stream(
     websocket: WebSocket,
     symbol: str | None = Query(default=None),
     interval: str | None = Query(default=None),
+    range: str | None = Query(default=None),
 ):
     """Live prediction/candle stream.
 
@@ -128,18 +146,26 @@ async def market_stream(
             return
         symbol_filter = candidate
 
-    if interval:
-        if interval not in settings.tracked_intervals:
+    if interval or range:
+        resolved_interval = runtime.resolve_interval(interval, range)
+        if resolved_interval not in settings.tracked_intervals:
             await websocket.accept()
             await websocket.close(code=1008, reason="Unsupported interval")
             return
-        interval_filter = interval
+        interval_filter = resolved_interval
 
     await runtime.hub.connect(websocket, symbol_filter, interval_filter)
     # Send one immediate snapshot so the client UI can render instantly.
     snapshot = await runtime.build_snapshot_event(symbol_filter, interval_filter)
     if snapshot:
-        await websocket.send_json(snapshot)
+        try:
+            await websocket.send_json(snapshot)
+        except WebSocketDisconnect:
+            await runtime.hub.disconnect(websocket)
+            return
+        except Exception:
+            await runtime.hub.disconnect(websocket)
+            return
 
     try:
         while True:

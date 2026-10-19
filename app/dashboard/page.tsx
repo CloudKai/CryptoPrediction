@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { DEFAULT_INTERVAL, DEFAULT_SYMBOL } from "@/lib/constants";
+import { DEFAULT_CHART_RANGE, DEFAULT_SYMBOL } from "@/lib/constants";
 
 export default function DashboardRedirectPage() {
-  redirect(`/dashboard/${DEFAULT_SYMBOL}?interval=${DEFAULT_INTERVAL}`);
+  redirect(`/dashboard/${DEFAULT_SYMBOL}?range=${DEFAULT_CHART_RANGE}`);
 }

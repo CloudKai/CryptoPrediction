@@ -73,6 +73,30 @@ body {
   animation: fade-up 550ms ease-out both;
 }
 
+.scrollbar-panel {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(71, 85, 105, 0.95) rgba(15, 23, 42, 0.6);
+}
+
+.scrollbar-panel::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scrollbar-panel::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 9999px;
+}
+
+.scrollbar-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(51, 65, 85, 0.95), rgba(71, 85, 105, 0.95));
+  border-radius: 9999px;
+  border: 2px solid rgba(15, 23, 42, 0.65);
+}
+
+.scrollbar-panel::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(71, 85, 105, 0.95), rgba(100, 116, 139, 0.95));
+}
+
 @keyframes shimmer {
   to {
     transform: translateX(100%);

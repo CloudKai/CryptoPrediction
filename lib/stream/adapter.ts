@@ -1,4 +1,4 @@
-import type { Interval, MarketStreamEvent, StreamConnectionStatus } from "@/types/market";
+import type { ChartRange, Interval, MarketStreamEvent, StreamConnectionStatus } from "@/types/market";
 
 type StreamCallbacks = {
   onStatus: (status: StreamConnectionStatus) => void;
@@ -8,38 +8,17 @@ type StreamCallbacks = {
 export type MarketStreamAdapter = {
   subscribe: (
     symbol: string,
+    range: ChartRange,
     interval: Interval,
     callbacks: StreamCallbacks,
   ) => () => void;
 };
 
-function createSseAdapter(): MarketStreamAdapter {
+function createDisabledAdapter(): MarketStreamAdapter {
   return {
-    subscribe(symbol, interval, callbacks) {
-      callbacks.onStatus("connecting");
-      const source = new EventSource(
-        `/api/market/stream?symbol=${encodeURIComponent(symbol)}&interval=${interval}`,
-      );
-
-      source.onopen = () => {
-        callbacks.onStatus("connected");
-      };
-
-      source.onmessage = (messageEvent) => {
-        try {
-          const payload = JSON.parse(messageEvent.data) as MarketStreamEvent;
-          callbacks.onEvent(payload);
-        } catch {
-          callbacks.onStatus("reconnecting");
-        }
-      };
-
-      source.onerror = () => {
-        callbacks.onStatus("reconnecting");
-      };
-
+    subscribe(_symbol, _range, _interval, callbacks) {
+      callbacks.onStatus("disconnected");
       return () => {
-        source.close();
         callbacks.onStatus("disconnected");
       };
     },
@@ -48,10 +27,11 @@ function createSseAdapter(): MarketStreamAdapter {
 
 function createWebSocketAdapter(wsBaseUrl: string): MarketStreamAdapter {
   return {
-    subscribe(symbol, interval, callbacks) {
+    subscribe(symbol, range, interval, callbacks) {
       callbacks.onStatus("connecting");
       const wsUrl = new URL(wsBaseUrl);
       wsUrl.searchParams.set("symbol", symbol);
+      wsUrl.searchParams.set("range", range);
       wsUrl.searchParams.set("interval", interval);
       const socket = new WebSocket(wsUrl.toString());
 
@@ -82,5 +62,5 @@ export function createMarketStreamAdapter(): MarketStreamAdapter {
   if (wsUrl) {
     return createWebSocketAdapter(wsUrl);
   }
-  return createSseAdapter();
+  return createDisabledAdapter();
 }

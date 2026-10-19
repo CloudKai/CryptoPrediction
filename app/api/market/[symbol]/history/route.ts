@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getCandleHistory } from "@/lib/mock/market";
+import {
+  hasBackendApiBaseUrl,
+  missingBackendApiResponse,
+} from "@/lib/server/backend-config";
 import { maybeProxyRequest } from "@/lib/server/proxy";
 import { parseInterval } from "@/lib/utils";
 
@@ -13,15 +16,21 @@ type RouteContext = {
 export async function GET(request: Request, context: RouteContext) {
   const { symbol } = await context.params;
   const url = new URL(request.url);
-  const interval = parseInterval(url.searchParams.get("interval"));
-  const limit = Number.parseInt(url.searchParams.get("limit") ?? "500", 10);
+  parseInterval(url.searchParams.get("interval"));
+  Number.parseInt(url.searchParams.get("limit") ?? "500", 10);
+
+  if (!hasBackendApiBaseUrl()) {
+    return missingBackendApiResponse();
+  }
 
   const proxied = await maybeProxyRequest(`/api/market/${symbol}/history`, url.searchParams);
   if (proxied) return proxied;
 
-  return NextResponse.json(getCandleHistory(symbol, interval, limit), {
-    headers: {
-      "Cache-Control": "no-store",
+  return NextResponse.json(
+    {
+      error: "No data",
+      message: "Backend API proxy is configured but the request failed.",
     },
-  });
+    { status: 502, headers: { "Cache-Control": "no-store" } },
+  );
 }

@@ -121,7 +121,7 @@ def parse_args(settings: Settings):
         "--intervals",
         type=str,
         default="",
-        help="Comma-separated intervals from 1m,5m,15m (default: use TRACKED_INTERVALS).",
+        help="Comma-separated intervals from 1m,5m,1h,4h,1d (default: use TRACKED_INTERVALS).",
     )
     args = parser.parse_args()
 
