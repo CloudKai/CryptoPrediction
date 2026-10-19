@@ -18,9 +18,10 @@ The frontend still only consumes backend endpoints and never calls Binance direc
 
 ## Pages
 
-- `/` landing page with project branding, architecture narrative, feature cards, and dashboard CTA.
-- `/dashboard/[symbol]?interval=1m|5m|15m` real-time dashboard view.
-- `/dashboard` redirects to the default symbol and interval.
+- `/` monitoring overview dashboard.
+- `/dashboard/[symbol]?range=live|1d|1w|1mo|1y` shareable symbol dashboard view.
+- `/latest-news` crypto news grouped into `Latest News`, `This Week`, and `This Month`.
+- `/dashboard` redirects to the default symbol and chart range.
 
 ## Backend Contract
 
@@ -28,9 +29,12 @@ Frontend-facing endpoints expected:
 
 - `GET /api/coins`
 - `GET /api/market/:symbol/history?interval=5m&limit=500`
+- `GET /api/market/:symbol/history?range=live|1d|1w|1mo|1y`
 - `GET /api/prediction/:symbol?interval=5m`
+- `GET /api/prediction/:symbol?range=live|1d|1w|1mo|1y`
 - `GET /api/prediction/:symbol/history?interval=5m`
-- stream endpoint for live updates (demo defaults to internal SSE at `/api/market/stream`)
+- `GET /api/prediction/:symbol/history?range=live|1d|1w|1mo|1y`
+- `WS /ws/market?symbol=BTCUSDT&range=live|1d|1w|1mo|1y`
 
 Python backend implements:
 
@@ -40,29 +44,37 @@ Python backend implements:
 - `GET /api/prediction/{symbol}/history`
 - `WS /ws/market`
 
-## Demo Mode vs Real Backend
+## Frontend and Backend Sync
 
-This project ships with deterministic mocked route handlers so the app is runnable immediately.
+This project is backend-only now. The frontend shows `No data` until both backend env vars are configured:
 
-To switch to your real backend:
+1. Set `BACKEND_API_BASE_URL=http://localhost:8000` in `.env.local`
+2. Set `NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/market` in `.env.local`
+3. Start the Python backend before opening the dashboard
 
-1. Set `BACKEND_API_BASE_URL` to proxy REST from Next route handlers.
-2. Set `NEXT_PUBLIC_WS_URL` to point dashboard stream to your backend WebSocket.
+News API configuration:
 
-Both are optional in `.env.example`.
+4. Set `NEWSDATA_API_KEY=...` in `.env.local` for `/api/crypto-news`
 
 ## Python Backend
 
 Backend source lives in `backend/`.
 
 ```bash
-cd backend
-uv sync
-uv run python -m backend.scripts.train_offline
-uv run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+uv sync --project backend
+uv run --project backend python -m backend.scripts.train_offline
+uv run --project backend uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
 Use `backend/.env.example` for backend runtime/training configuration.
+
+Range mapping used across frontend and backend:
+
+- `live` -> `1m`, about 60 candles
+- `1d` -> `5m`, about 288 candles
+- `1w` -> `1h`, about 168 candles
+- `1mo` -> `4h`, about 180 candles
+- `1y` -> `1d`, about 365 candles
 
 ## Project Structure
 
@@ -77,7 +89,6 @@ components/
 hooks/
 lib/
   api/
-  mock/
   server/
   stream/
 backend/
@@ -112,10 +123,11 @@ python3 -m compileall backend
 ## Architecture Notes
 
 - Reusable domain types live in `types/market.ts`.
-- Mock generation is deterministic (`lib/mock/market.ts`) for stable portfolio demos.
+- Frontend routes are backend-only: if `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_WS_URL` are missing, the UI shows a `No data` setup message instead of falling back to mock data.
+- `/api/crypto-news` uses a server-only NewsData key, writes a local CSV cache at `data/crypto-news.csv`, and only refreshes upstream on a 12-hour window to reduce credit usage.
 - Frontend hooks (`hooks/`) orchestrate snapshot loading + live stream reconciliation.
 - Stream transport is swappable (`lib/stream/adapter.ts`):
-  - defaults to internal SSE demo
+  - stays disconnected until `NEXT_PUBLIC_WS_URL` is configured
   - uses `NEXT_PUBLIC_WS_URL` when configured
 - UI is componentized for clear separation between landing, dashboard widgets, and layout primitives.
 
@@ -126,3 +138,4 @@ This frontend is intentionally analytics-only:
 - no authentication
 - no trading execution
 - no broker/order integrations
+# CryptoPrediction
