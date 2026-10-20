@@ -80,7 +80,7 @@ export function DashboardClient({
   };
 
   const overviewHref =
-    `/?range=${range}`;
+    `/markets?range=${range}`;
   const monitorHref = `/dashboard/${symbol}?range=${range}`;
 
   return (

@@ -1,5 +1,7 @@
 # Crypto Prediction Dashboard
 
+Discover is now the default entry page: a grouped budget/profile form with a dedicated allocation-results view. The existing market overview has moved to `/markets`. See [Discover implementation](docs/DISCOVER_IMPLEMENTATION.md) for scope, storage, validation, and the optional allocation-service contract. The specialist pipeline is implemented but stays unavailable until credentials, a reviewed strategy, and a specialist evaluation report are configured. Accounts remain unavailable. See [financial engine](docs/FINANCIAL_ENGINE.md) for calculations, research APIs, release gates, and the evaluation workflow.
+
 Full-stack project with:
 
 - **Next.js App Router frontend** (dashboard + landing page)
@@ -18,7 +20,9 @@ The frontend still only consumes backend endpoints and never calls Binance direc
 
 ## Pages
 
-- `/` monitoring overview dashboard.
+- `/` Discover budget/profile form.
+- `/discover/results` allocation results or explicit unavailable-analysis state.
+- `/markets` monitoring overview dashboard.
 - `/dashboard/[symbol]?range=live|1d|1w|1mo|1y` shareable symbol dashboard view.
 - `/latest-news` crypto news grouped into `Latest News`, `This Week`, and `This Month`.
 - `/dashboard` redirects to the default symbol and chart range.

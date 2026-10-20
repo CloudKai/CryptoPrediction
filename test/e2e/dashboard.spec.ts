@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const COINS = [
   { symbol: "BTCUSDT", displayName: "Bitcoin", baseAsset: "BTC", quoteAsset: "USDT" },
@@ -120,7 +120,7 @@ function createNewsItems(category: string) {
   }));
 }
 
-async function mockBackendApis(page: Parameters<typeof test.beforeEach>[0]["page"]) {
+async function mockBackendApis(page: Page) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
@@ -216,24 +216,24 @@ test.describe("Crypto Prediction Dashboard Pages", () => {
 
   test("Overview page watchlist search and navigation", async ({ page }) => {
     // 1. Load the overview page with a stable mocked API layer.
-    await page.goto("/?range=live");
+    await page.goto("/markets?range=live");
 
     // 2. Verify the main navigation shell is visible.
-    await expect(page.getByText("CRYPTO PREDICTION DASHBOARD")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Overview" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Monitor & Predict" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "News" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "How It Works" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Markets", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Discover", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Markets", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("link", { name: "Market news" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "How signals work" })).toBeVisible();
 
     // 3. Verify the watchlist table renders and the search input filters symbols by short name or full name.
-    await expect(page.getByRole("heading", { name: "Watchlist" })).toBeVisible();
-    const watchlistSearch = page.getByPlaceholder("Search BTC, BNB, Bitcoin...");
+    await expect(page.getByRole("heading", { name: "Tracked assets" })).toBeVisible();
+    const watchlistSearch = page.getByRole("searchbox", { name: "Search assets" });
     await watchlistSearch.fill("BN");
     await expect(page.locator("tbody tr").filter({ hasText: "BNB" })).toBeVisible();
     await expect(page.locator("tbody tr").filter({ hasText: "Bitcoin" })).toHaveCount(0);
 
     // 4. Click a filtered row and verify navigation to the monitor route for that symbol.
-    await page.locator("tbody tr").filter({ hasText: "BNB" }).first().click();
+    await page.locator("tbody tr").filter({ hasText: "BNB" }).getByRole("link").click();
     await expect(page).toHaveURL(/\/dashboard\/BNBUSDT\?range=live$/);
   });
 
@@ -284,9 +284,9 @@ test.describe("Crypto Prediction Dashboard Pages", () => {
     // 2. Verify the page shell and section headings are visible.
     await expect(page.getByRole("link", { name: "News" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Market and technology stories" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Market" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Crypto" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Tech" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Market", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Crypto", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tech", exact: true })).toBeVisible();
 
     // 3. Verify article links are real links and not dead buttons.
     await expect(page.getByRole("link", { name: "Read more" }).first()).toHaveAttribute(
@@ -295,9 +295,8 @@ test.describe("Crypto Prediction Dashboard Pages", () => {
     );
 
     // 4. Move the Market row to page 2 and verify the row pagination updates.
-    const marketRow = page.locator("div").filter({
-      has: page.getByRole("heading", { name: "Market", exact: true }),
-    }).first();
+    const marketRow = page.getByRole("heading", { name: "Market", exact: true })
+      .locator("..").locator("..").locator("..");
     await expect(marketRow.getByText("Page 1 of 4")).toBeVisible();
     await marketRow.getByRole("button", { name: "2" }).click();
     await expect(marketRow.getByText("Page 2 of 4")).toBeVisible();
@@ -309,11 +308,11 @@ test.describe("Crypto Prediction Dashboard Pages", () => {
 
     // 2. Verify the five-step workflow section is visible.
     await expect(page.getByRole("heading", { name: "From historical candles to live model signals" })).toBeVisible();
-    await expect(page.getByText("Historical Market Data")).toBeVisible();
-    await expect(page.getByText("Model Training")).toBeVisible();
-    await expect(page.getByText("Live Market Stream")).toBeVisible();
-    await expect(page.getByText("Real-Time Prediction")).toBeVisible();
-    await expect(page.getByText("Dashboard Visualization")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Historical Market Data", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Model Training", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Live Market Stream", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Real-Time Prediction", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Dashboard Visualization", exact: true })).toBeVisible();
 
     // 3. Verify the old Features content is now rendered as the second row on the same page.
     await expect(page.getByRole("heading", { name: "A technical breakdown of the monitoring stack" })).toBeVisible();

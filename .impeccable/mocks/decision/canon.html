@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Discover — familiar workspace direction</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#242628;background:#f6f7f8;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{height:900px;overflow:hidden;display:grid;grid-template-columns:222px 1fr}.sidebar{background:#fff;border-right:1px solid #e4e6e8;padding:30px 18px;display:flex;flex-direction:column}.brand{font-size:17px;font-weight:650;letter-spacing:-.5px;padding:0 14px 38px}.brand span{display:block;font-size:11px;font-weight:400;letter-spacing:0;color:#85898d;margin-top:3px}.nav{display:flex;flex-direction:column;gap:7px}.nav a{display:flex;align-items:center;gap:13px;padding:12px 15px;text-decoration:none;color:#73777b;border-radius:7px}.nav a:first-child{background:#eeeff0;color:#25282b;font-weight:600}.icon{font-size:18px;width:20px;text-align:center;line-height:1}.sidebar-bottom{margin-top:auto;border-top:1px solid #eceef0;padding:22px 12px 0;display:flex;align-items:center;gap:12px}.avatar{width:34px;height:34px;border:1px solid #dcdfe2;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#555b60}.guest{font-weight:550;font-size:13px}.muted{color:#81868c;font-size:12px}main{min-width:0}.topbar{height:76px;background:#fff;border-bottom:1px solid #e4e6e8;padding:0 48px;display:flex;align-items:center;justify-content:space-between;font-size:13px}.topbar .context{color:#8b9095}.topbar .context b{font-weight:500;color:#41474b}.topbar .meta{display:flex;align-items:center;gap:20px;color:#7a8085}.signin{border:1px solid #dfe2e5;border-radius:6px;padding:7px 16px;color:#353b40;background:#fff}.content{max-width:1240px;padding:38px 48px 0;margin:auto}.eyebrow{color:#858a8e;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;font-weight:600}h1{font-size:31px;line-height:1.25;letter-spacing:-1.1px;font-weight:600;margin:9px 0 10px}.intro{margin:0;color:#777d82;font-size:14px}.workspace{display:grid;grid-template-columns:minmax(0,1fr) 302px;gap:24px;margin-top:29px;align-items:start}.form{background:#fff;border:1px solid #e1e4e6;border-radius:9px;padding:26px 29px}.section-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px}h2{font-size:16px;letter-spacing:-.3px;margin:0;font-weight:600}.required{font-size:11px;color:#91969a}.field-label{display:block;font-size:13px;font-weight:550;margin-bottom:9px}.budget{height:49px;border:1px solid #d5d9dc;border-radius:6px;display:flex;align-items:center;padding:0 14px;gap:12px}.budget .currency{font-size:12px;border-right:1px solid #e6e8ea;padding-right:13px;color:#70777d}.budget input{border:0;outline:0;min-width:0;font:500 19px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;width:100%;color:#25292c}.small{font-size:11px;color:#868c91;margin-top:7px}.preferences{margin-top:21px}.preferences label span{color:#91979c;font-weight:400;margin-left:4px}.textbox{height:68px;border:1px solid #dfe2e5;border-radius:6px;padding:11px 13px;color:#9a9fa4;font-size:12px}.divider{height:1px;background:#eceef0;margin:25px 0 22px}.question{border:0;margin:0 0 20px;padding:0}.question legend{font-size:12px;font-weight:550;margin-bottom:10px;line-height:1.5}.options{display:flex;flex-wrap:wrap;gap:8px}.option{border:1px solid #dfe3e6;border-radius:5px;padding:8px 10px;font-size:11px;display:flex;align-items:center;gap:7px;color:#656c72;white-space:nowrap}.option input{appearance:none;width:12px;height:12px;border:1px solid #bbc2c8;border-radius:50%;margin:0;background:#fff}.summary{border:1px solid #e1e4e6;border-radius:9px;background:#fff;overflow:hidden}.summary-head{padding:23px 23px 18px;border-bottom:1px solid #eceef0}.summary h2{font-size:14px}.summary-head p{font-size:12px;color:#8a9096;margin:5px 0 0}.summary-body{padding:5px 23px 22px}.summary-row{display:flex;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:1px solid #eceef0;font-size:12px}.summary-row span{color:#81888e}.summary-row strong{font-weight:500}.summary-row:last-of-type{border-bottom:0}.pending{color:#a0a6ab!important}.next{margin:1px 23px 23px;border-radius:6px;background:#f5f6f7;padding:16px;font-size:12px;color:#7b8288}.next strong{display:block;color:#545c62;font-weight:550;margin-bottom:7px}.next p{margin:0;line-height:1.7}.note{margin-top:18px;color:#8b9197;font-size:11px;line-height:1.7;padding:0 3px}.preview{position:fixed;right:22px;bottom:17px;background:#fff;border:1px solid #e1e4e6;border-radius:20px;padding:7px 13px;font-size:10px;color:#91979c}.submit{background:#292d30;color:white;border:0;border-radius:6px;width:100%;height:44px;font-weight:550}.below-note{font-size:11px;color:#8c9297;text-align:center;margin-top:10px}
+</style>
+<div class="app">
+ <aside class="sidebar">
+  <div class="brand">Crypto Prediction<span>Research &amp; allocation</span></div>
+  <nav class="nav" aria-label="Main navigation">
+   <a href="#" aria-current="page"><span class="icon">◈</span>Discover</a>
+   <a href="#"><span class="icon">▥</span>Markets</a>
+   <a href="#"><span class="icon">☆</span>Watchlist</a>
+   <a href="#"><span class="icon">▤</span>Invested</a>
+  </nav>
+  <div class="sidebar-bottom"><div class="avatar">G</div><div><div class="guest">Guest account</div><div class="muted">Sign in to save more</div></div></div>
+ </aside>
+ <main>
+  <header class="topbar"><div class="context">Workspace <span style="padding:0 13px">/</span> <b>Discover</b></div><div class="meta"><span>USD</span><button class="signin">Sign in</button></div></header>
+  <div class="content">
+   <div class="eyebrow">Discover</div>
+   <h1>Find an allocation that fits you.</h1>
+   <p class="intro">Share your budget and preferences. Review the suggested assets, evidence, and risks.</p>
+   <div class="workspace">
+    <form class="form">
+     <div class="section-head"><h2>Your investment plan</h2><span class="required">All profile questions required</span></div>
+     <label class="field-label" for="amount">Amount to allocate</label>
+     <div class="budget"><span class="currency">USD</span><input id="amount" value="1,000" aria-label="Amount to allocate in USD"></div>
+     <div class="small">Currency preferences are available in Settings after signing in.</div>
+     <div class="preferences"><label class="field-label">Additional preferences <span>Optional</span></label><div class="textbox">For example: Focus on infrastructure projects and exclude meme coins.</div></div>
+     <div class="divider"></div>
+     <div class="section-head"><h2>Your investment profile</h2><span class="required">Select one per question</span></div>
+     <fieldset class="question"><legend>When might you need this money?</legend><div class="options">
+      <label class="option"><input type="radio" name="horizon">Under 1 year</label><label class="option"><input type="radio" name="horizon">1–3 years</label><label class="option"><input type="radio" name="horizon">3–5 years</label><label class="option"><input type="radio" name="horizon">Over 5 years</label><label class="option"><input type="radio" name="horizon">Unsure</label>
+     </div></fieldset>
+     <fieldset class="question"><legend>Would losing this amount affect essential expenses or emergency savings?</legend><div class="options">
+      <label class="option"><input type="radio" name="capacity">Yes</label><label class="option"><input type="radio" name="capacity">No</label><label class="option"><input type="radio" name="capacity">Unsure</label>
+     </div></fieldset>
+     <fieldset class="question"><legend>If $1,000 fell to $800, what would you most likely do?</legend><div class="options">
+      <label class="option"><input type="radio" name="reaction">Sell all</label><label class="option"><input type="radio" name="reaction">Sell some</label><label class="option"><input type="radio" name="reaction">Hold and reassess</label><label class="option"><input type="radio" name="reaction">Unsure</label>
+     </div></fieldset>
+     <fieldset class="question"><legend>What is your investment experience?</legend><div class="options">
+      <label class="option"><input type="radio" name="experience">None</label><label class="option"><input type="radio" name="experience">Basic</label><label class="option"><input type="radio" name="experience">Experienced</label>
+     </div></fieldset>
+     <fieldset class="question"><legend>What investments do you already hold?</legend><div class="options">
+      <label class="option"><input type="radio" name="holdings">None</label><label class="option"><input type="radio" name="holdings">Crypto</label><label class="option"><input type="radio" name="holdings">Stocks or funds</label><label class="option"><input type="radio" name="holdings">Both</label><label class="option"><input type="radio" name="holdings">Other</label><label class="option"><input type="radio" name="holdings">Prefer not to say</label>
+     </div></fieldset>
+     <button class="submit" type="button">Generate allocation →</button><div class="below-note">Review your allocation on the next page.</div>
+    </form>
+    <aside>
+     <div class="summary"><div class="summary-head"><h2>Your request</h2><p>A summary of the inputs you provide.</p></div>
+      <div class="summary-body"><div class="summary-row"><span>Market</span><strong>Cryptocurrency</strong></div><div class="summary-row"><span>Budget</span><strong>$1,000.00 USD</strong></div><div class="summary-row"><span>Investment profile</span><strong class="pending">Not completed</strong></div><div class="summary-row"><span>Preferences</span><strong class="pending">None added</strong></div></div>
+      <div class="next"><strong>What happens next</strong><p>Complete your profile to request an allocation. Your results open on a separate page with amounts, reasoning, and risks.</p></div>
+     </div>
+     <div class="note">Suggestions remain separate from investments you record in Invested. No purchases are made here.</div>
+    </aside>
+   </div>
+  </div>
+ </main>
+</div>
+<div class="preview">Direction preview · illustrative inputs</div>
+</html>

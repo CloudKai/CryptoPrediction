@@ -1,0 +1,104 @@
+<div id="invested-exploration">
+  <style>
+    #invested-exploration { --ip-bg: light-dark(#f8f8f6,#202220); --ip-paper: light-dark(#ffffff,#292b29); --ip-text: light-dark(#303530,#ededdf); --ip-muted: light-dark(#636b63,#b0b8ae); --ip-line: light-dark(#dce0d9,#494e47); --ip-soft: light-dark(#eff1ec,#353a33); --ip-strong: light-dark(#3e493e,#d3dbc9); --ip-on: light-dark(#ffffff,#252d23); color:var(--ip-text); font-family:ui-sans-serif,system-ui,sans-serif; font-size:14px; line-height:1.5; }
+    #invested-exploration * { box-sizing:border-box; }
+    #invested-exploration [hidden] { display:none !important; }
+    #invested-exploration .ip-stage { min-height:980px; }
+    #invested-exploration .ip-app { background:var(--ip-bg); border:1px solid var(--ip-line); border-radius:16px; overflow:hidden; }
+    #invested-exploration .ip-nav { padding:18px 24px; display:flex; flex-wrap:wrap; align-items:center; gap:24px; border-bottom:1px solid var(--ip-line); background:var(--ip-paper); padding-right:100px; }
+    #invested-exploration .ip-brand { font-weight:600; letter-spacing:-.02em; }
+    #invested-exploration .ip-links { display:flex; flex-wrap:wrap; gap:20px; color:var(--ip-muted); font-size:13px; }
+    #invested-exploration .ip-active { color:var(--ip-text); font-weight:600; text-decoration:underline; text-underline-offset:7px; }
+    #invested-exploration .ip-content { padding:28px; }
+    #invested-exploration h2 { margin:0; font-size:24px; line-height:1.25; font-weight:600; letter-spacing:-.035em; }
+    #invested-exploration h3 { margin:0; font-size:14px; font-weight:600; }
+    #invested-exploration .ip-header { display:flex; gap:16px; justify-content:space-between; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
+    #invested-exploration .ip-sub { color:var(--ip-muted); font-size:12px; margin-top:5px; }
+    #invested-exploration .ip-button { appearance:none; font:inherit; font-size:12px; padding:9px 13px; border:1px solid var(--ip-line); border-radius:7px; background:var(--ip-paper); color:var(--ip-text); cursor:pointer; }
+    #invested-exploration .ip-button:focus-visible, #invested-exploration summary:focus-visible { outline:2px solid var(--ip-strong); outline-offset:3px; }
+    #invested-exploration .ip-button.ip-primary { background:var(--ip-strong); color:var(--ip-on); border-color:var(--ip-strong); }
+    #invested-exploration .ip-number { font-variant-numeric:tabular-nums; }
+    #invested-exploration .ip-table-scroll { overflow-x:auto; }
+    #invested-exploration table { width:100%; border-collapse:collapse; font-size:13px; }
+    #invested-exploration th { text-align:right; font-weight:500; color:var(--ip-muted); padding:12px 14px; border-bottom:1px solid var(--ip-line); white-space:nowrap; }
+    #invested-exploration th:first-child, #invested-exploration td:first-child { text-align:left; }
+    #invested-exploration td { text-align:right; padding:16px 14px; vertical-align:top; font-variant-numeric:tabular-nums; }
+    #invested-exploration .ip-table { background:var(--ip-paper); border:1px solid var(--ip-line); border-radius:10px; overflow:hidden; }
+    #invested-exploration .ip-name { display:flex; gap:10px; align-items:center; }
+    #invested-exploration .ip-mark { background:var(--ip-soft); border-radius:50%; width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; font-weight:600; flex-shrink:0; }
+    #invested-exploration .ip-delta { color:var(--ip-muted); font-size:12px; margin-top:3px; }
+    #invested-exploration .ip-pill { display:inline-block; padding:2px 7px; background:var(--ip-soft); color:var(--ip-muted); border-radius:4px; font-size:11px; }
+    #invested-exploration .ip-under { padding:0 14px 14px; border-bottom:1px solid var(--ip-line); }
+    #invested-exploration .ip-under td { padding:0; }
+    #invested-exploration .ip-risk { background:var(--ip-soft); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; text-align:left; font-size:12px; }
+    #invested-exploration .ip-risk small { color:var(--ip-muted); font-size:12px; }
+    #invested-exploration .ip-details { margin:10px 14px 0; text-align:left; }
+    #invested-exploration summary { cursor:pointer; font-size:12px; color:var(--ip-muted); width:fit-content; padding:5px 0; }
+    #invested-exploration .ip-purchases th { padding:9px 8px; font-size:11px; }
+    #invested-exploration .ip-purchases td { padding:10px 8px; font-size:12px; }
+    #invested-exploration .ip-form { display:flex; flex-wrap:wrap; gap:12px; align-items:end; padding:14px 0; }
+    #invested-exploration .ip-form label { display:grid; gap:5px; color:var(--ip-muted); font-size:12px; flex:1 1 130px; }
+    #invested-exploration .ip-form input { font:inherit; color:var(--ip-text); background:var(--ip-paper); border:1px solid var(--ip-line); border-radius:6px; padding:9px; min-width:0; width:100%; }
+    #invested-exploration .ip-form [role=alert] { flex-basis:100%; color:var(--ip-text); }
+    #invested-exploration .ip-total td { border-top:1px solid var(--ip-line); font-weight:600; padding-top:20px; padding-bottom:20px; background:var(--ip-soft); }
+    #invested-exploration .ip-overall { padding-top:24px; }
+    #invested-exploration .ip-overall-title { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+    #invested-exploration .ip-overall-body { padding:16px; border:1px solid var(--ip-line); border-radius:9px; background:var(--ip-paper); display:flex; flex-wrap:wrap; gap:28px; }
+    #invested-exploration .ip-overall-body div { flex:1 1 180px; }
+    #invested-exploration .ip-section { background:var(--ip-paper); border:1px solid var(--ip-line); border-radius:10px; margin-bottom:16px; overflow:hidden; }
+    #invested-exploration .ip-section-top { padding:14px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+    #invested-exploration .ip-caption { margin-top:14px; color:var(--ip-muted); font-size:12px; }
+    @media(max-width:600px) { #invested-exploration .ip-content { padding:18px 12px; } #invested-exploration .ip-nav { padding:14px 12px; gap:12px; } #invested-exploration .ip-links { gap:12px; } #invested-exploration .ip-stage { min-height:1160px; } #invested-exploration td,#invested-exploration th { padding-left:9px; padding-right:9px; } #invested-exploration table { min-width:540px; } #invested-exploration .ip-purchases { min-width:520px; } }
+    @media(pointer:coarse) { #invested-exploration .ip-button, #invested-exploration summary { min-height:44px; } #invested-exploration .ip-form input { font-size:16px; min-height:44px; } }
+  </style>
+  <div class="viz-carousel" aria-label="Invested purchase-history layouts">
+    <section class="ip-stage" data-variant="Expandable rows" aria-label="Expandable rows layout"><div class="ip-app" data-layout="rows"></div></section>
+    <section class="ip-stage" data-variant="Coin sections" aria-label="Coin sections layout" hidden><div class="ip-app" data-layout="sections"></div></section>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('invested-exploration');
+      const assets = [
+        { id:'btc',name:'Bitcoin',symbol:'BTC',price:60000,lots:[{date:'2024-01-10',quantity:0.01,cost:500}] },
+        { id:'eth',name:'Ethereum',symbol:'ETH',price:2000,lots:[{date:'2024-06-12',quantity:0.4,cost:1000}] }
+      ];
+      const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(n);
+      const signedMoney = n => `${n>=0?'+':'−'}${money(Math.abs(n))}`;
+      const signedPct = n => `${n>=0?'+':'−'}${Math.abs(n).toFixed(1)}%`;
+      const total = a => a.lots.reduce((v,l)=>({cost:v.cost+l.cost,value:v.value+l.quantity*a.price}),{cost:0,value:0});
+      const status = document.createElement('div'); status.setAttribute('aria-live','polite'); status.className='ip-sub'; root.append(status);
+      function name(a) { return `<div class="ip-name"><span class="ip-mark" aria-hidden="true">${a.symbol[0]}</span><div><strong>${a.name}</strong><div class="ip-sub">${a.symbol}</div></div></div>`; }
+      function value(a) { const t=total(a); return `${money(t.value)}<div class="ip-delta">${signedMoney(t.value-t.cost)} · ${signedPct((t.value/t.cost-1)*100)} vs cost</div>`; }
+      function future() { return '<td>—<div class="ip-sub">No estimate</div></td>'.repeat(3); }
+      function risk(a) { return `<div class="ip-risk"><strong>${a.name} risk review</strong><small>Assessment unavailable · sample records</small></div>`; }
+      function purchases(a,layout) {
+        return `<details class="ip-details" ${a.id==='btc'?'open':''}><summary>Purchase history · ${a.lots.length} ${a.lots.length===1?'purchase':'purchases'}</summary><div class="ip-table-scroll"><table class="ip-purchases"><thead><tr><th>Date</th><th>Quantity</th><th>Purchase cost</th><th>Value today</th><th>Gain / loss</th></tr></thead><tbody>${a.lots.map(l=>`<tr><td>${l.date}</td><td>${l.quantity}</td><td>${money(l.cost)}</td><td>${money(l.quantity*a.price)}</td><td>${signedMoney(l.quantity*a.price-l.cost)}<div class="ip-delta">${signedPct((l.quantity*a.price/l.cost-1)*100)}</div></td></tr>`).join('')}</tbody></table></div><button class="ip-button" data-add="${a.id}" type="button">+ Add purchase</button><form class="ip-form" data-form="${a.id}" hidden><label>Date<input name="date" type="date" value="2026-10-20" required></label><label>Quantity<input name="quantity" type="number" min="0.00000001" step="any" value="${a.id==='btc'?'0.01':'0.1'}" required></label><label>Total cost · USD<input name="cost" type="number" min="0.01" step="0.01" value="${a.id==='btc'?'600':'200'}" required></label><button class="ip-button ip-primary" type="submit">Save purchase</button><div role="alert" hidden></div></form></details>`;
+      }
+      function render() {
+        const grand=assets.reduce((t,a)=>{const v=total(a);return {cost:t.cost+v.cost,value:t.value+v.value};},{cost:0,value:0});
+        root.querySelectorAll('[data-layout]').forEach(app=>{
+          const layout=app.dataset.layout;
+          const head='<thead><tr><th>Coin</th><th>Current value</th><th>1 year</th><th>3 years</th><th>5 years</th></tr></thead>';
+          const totalRow=`<tr class="ip-total"><td>Portfolio total<div class="ip-sub">${assets.length} assets · USD</div></td><td>${money(grand.value)}<div class="ip-delta">${signedMoney(grand.value-grand.cost)} · ${signedPct((grand.value/grand.cost-1)*100)} vs cost</div></td>${future()}</tr>`;
+          let content;
+          if(layout==='rows') content=`<div class="ip-table"><div class="ip-table-scroll"><table>${head}<tbody>${assets.map(a=>`<tr><td>${name(a)}</td><td>${value(a)}</td>${future()}</tr><tr class="ip-under"><td colspan="5">${risk(a)}${purchases(a,layout)}</td></tr>`).join('')}${totalRow}</tbody></table></div></div>`;
+          else content=assets.map(a=>`<section class="ip-section"><div class="ip-section-top">${name(a)}<span class="ip-pill">${a.lots.length} purchase records</span></div><div class="ip-table-scroll"><table><thead><tr><th>Current value</th><th>1 year</th><th>3 years</th><th>5 years</th></tr></thead><tbody><tr><td>${value(a)}</td>${future()}</tr></tbody></table></div>${risk(a)}<div style="padding-bottom:14px">${purchases(a,layout)}</div></section>`).join('')+`<div class="ip-table"><div class="ip-table-scroll"><table>${head}<tbody>${totalRow}</tbody></table></div></div>`;
+          app.innerHTML=`<header class="ip-nav"><span class="ip-brand">Market research</span><nav class="ip-links" aria-label="App navigation"><span>Discover</span><span>Markets</span><span>Watchlist</span><span class="ip-active" aria-current="page">Invested</span></nav></header><main class="ip-content"><div class="ip-header"><div><h2>Invested</h2><div class="ip-sub">Illustrative records · hypothetical prices · no forecasts</div></div><span class="ip-pill">USD</span></div>${content}<section class="ip-overall"><div class="ip-overall-title"><h3>Overall risk review</h3><span class="ip-pill">Assessment unavailable</span></div><div class="ip-overall-body"><div><strong>Concentration</strong><div class="ip-sub">Bitcoin ${(total(assets[0]).value/grand.value*100).toFixed(1)}% · Ethereum ${(total(assets[1]).value/grand.value*100).toFixed(1)}%</div></div><div><strong>Portfolio risk</strong><div class="ip-sub">No measured risk assessment in this preview.</div></div></div></section><div class="ip-caption">Gain / loss compares current value with purchase cost. Future projections start from current value.</div></main>`;
+          app.querySelectorAll('[data-add]').forEach(button=>button.addEventListener('click',()=>{
+            const form=button.parentElement.querySelector('form');form.hidden=!form.hidden;if(!form.hidden)form.querySelector('input').focus();
+          }));
+          app.querySelectorAll('form').forEach(form=>form.addEventListener('submit',event=>{
+            event.preventDefault();
+            const data=new FormData(form);const quantity=Number(data.get('quantity'));const cost=Number(data.get('cost'));const date=String(data.get('date'));
+            if(!Number.isFinite(quantity)||quantity<=0||!Number.isFinite(cost)||cost<=0||!date){const error=form.querySelector('[role=alert]');error.hidden=false;error.textContent='Enter a date, positive quantity, and positive total cost.';return;}
+            const a=assets.find(item=>item.id===form.dataset.form);a.lots.push({date,quantity,cost});render();status.textContent=`${a.name} purchase added. Coin and portfolio totals updated.`;
+            const appAgain=root.querySelector(`[data-layout="${layout}"]`);appAgain.querySelector(`[data-add="${a.id}"]`).focus();
+          }));
+        });
+      }
+      render();
+      const design={compact:false};
+      if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{root.style.setProperty('--ip-row-space',design.compact?'10px':'16px');root.querySelectorAll('td').forEach(cell=>{if(!cell.closest('.ip-purchases')&&!cell.parentElement.classList.contains('ip-under'))cell.style.paddingTop=design.compact?'10px':'16px';});}});tweak.addToggle(design,'compact',{label:'Compact rows'});}
+    })();
+  </script>
+</div>
