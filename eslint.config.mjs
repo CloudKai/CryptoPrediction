@@ -17,6 +17,9 @@ const eslintConfig = defineConfig([
     ".codex/**",
     ".impeccable/**",
     "output/**",
+    "test-results/**",
+    "playwright-report/**",
+    ".playwright-cli/**",
   ]),
 ]);
 

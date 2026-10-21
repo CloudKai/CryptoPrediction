@@ -17,7 +17,9 @@ async function fillProfile(page: Page) {
   await page.getByRole("group", { name: /What investments do you already hold/ }).getByRole("radio", { name: "None", exact: true }).check();
 }
 
-test("Discover validates, preserves inputs, and displays real unavailable-service state", async ({ page }) => {
+test("Discover validates, preserves inputs, and displays the OpenAI setup failure", async ({ page }) => {
+  // Never let ordinary browser tests trigger paid model generation in configured environments.
+  await page.route("**/api/allocation", route => route.fulfill({ status: 503, json: { status: "unavailable", code: "openai_not_configured", message: "The OpenAI analysis connection has not been configured yet. Your inputs are preserved.", retryable: false } }));
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Generate allocation" })).toBeEnabled();
@@ -31,7 +33,8 @@ test("Discover validates, preserves inputs, and displays real unavailable-servic
   await expect(page.getByRole("complementary", { name: "Your request" })).toContainText("$1,000.00");
   await page.getByRole("button", { name: "Generate allocation" }).click();
   await expect(page).toHaveURL(/\/discover\/results\?request=/);
-  await expect(page.getByRole("heading", { name: "Your request is ready. Analysis isn’t available yet." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "An allocation couldn’t be completed." })).toBeVisible();
+  await expect(page.getByText("The OpenAI analysis connection has not been configured yet. Your inputs are preserved.", { exact: true })).toBeVisible();
   await capture(page, "unavailable");
   await page.getByRole("button", { name: "Edit inputs", exact: true }).first().click();
   await expect(page.getByLabel("Amount to allocate", { exact: false })).toHaveValue("1,000.00");

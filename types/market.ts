@@ -91,6 +91,7 @@ export type CandleHistoryResponse = {
   symbol: string;
   interval: Interval;
   candles: Candle[];
+  observedAt?: number | null;
 };
 
 export type PredictionResponse = {

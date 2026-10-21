@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { assetFeedFixture } from "../fixtures/assets";
+import type { BrowseRange } from "../../lib/assets/types";
 
 const COINS = [
   { symbol: "BTCUSDT", displayName: "Bitcoin", baseAsset: "BTC", quoteAsset: "USDT" },
@@ -32,7 +34,6 @@ const RANGE_TO_LIMIT: Record<string, number> = {
 function createCandles(symbol: string, interval: string, count: number) {
   const symbolIndex = COINS.findIndex((coin) => coin.symbol === symbol);
   const seed = Math.max(symbolIndex, 0) + 1;
-  const now = Date.UTC(2026, 3, 22, 12, 0, 0);
   const intervalMs =
     interval === "1m"
       ? 60_000
@@ -45,6 +46,7 @@ function createCandles(symbol: string, interval: string, count: number) {
             : interval === "4h"
               ? 14_400_000
               : 86_400_000;
+  const now = Math.floor(Date.now() / intervalMs) * intervalMs;
 
   const basePrice = 70_000 / seed + seed * 120;
 
@@ -214,27 +216,35 @@ test.describe("Crypto Prediction Dashboard Pages", () => {
     await mockBackendApis(page);
   });
 
-  test("Overview page watchlist search and navigation", async ({ page }) => {
-    // 1. Load the overview page with a stable mocked API layer.
-    await page.goto("/markets?range=live");
+  test("Crypto top activity charts, ranges, search and Discover selection", async ({ page }) => {
+    await page.route("**/api/assets?*", route => route.fulfill({json:assetFeedFixture("crypto",new URL(route.request().url()).searchParams.get("range") as BrowseRange)}));
+    await page.goto("/markets");
+    await expect(page.getByRole("heading", {name:"Crypto",exact:true})).toBeVisible();
+    await expect(page.getByRole("link", {name:"Crypto",exact:true})).toHaveAttribute("aria-current","page");
+    const bitcoin=page.getByRole("article", {name:"Bitcoin",exact:true});
+    await expect(bitcoin.getByRole("img")).toBeVisible();
+    await page.getByRole("radio",{name:"7D",exact:true}).check();
+    await expect(bitcoin.getByRole("img")).toBeVisible();
+    await page.getByRole("radio",{name:"1M",exact:true}).check();
+    await page.getByRole("searchbox",{name:"Search these assets"}).fill("BN");
+    const bnb=page.getByRole("article",{name:"BNB",exact:true});
+    await expect(bnb).toBeVisible();
+    await expect(bitcoin).toHaveCount(0);
+    await bnb.getByRole("button",{name:"Use in Discover"}).click();
+    await expect(page).toHaveURL("/");
+    await expect(page.getByRole("textbox",{name:/Additional preferences/})).toHaveValue(/BNB/);
+  });
 
-    // 2. Verify the main navigation shell is visible.
-    await expect(page.getByRole("heading", { name: "Markets", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Discover", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Markets", exact: true })).toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("link", { name: "Market news" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "How signals work" })).toBeVisible();
-
-    // 3. Verify the watchlist table renders and the search input filters symbols by short name or full name.
-    await expect(page.getByRole("heading", { name: "Tracked assets" })).toBeVisible();
-    const watchlistSearch = page.getByRole("searchbox", { name: "Search assets" });
-    await watchlistSearch.fill("BN");
-    await expect(page.locator("tbody tr").filter({ hasText: "BNB" })).toBeVisible();
-    await expect(page.locator("tbody tr").filter({ hasText: "Bitcoin" })).toHaveCount(0);
-
-    // 4. Click a filtered row and verify navigation to the monitor route for that symbol.
-    await page.locator("tbody tr").filter({ hasText: "BNB" }).getByRole("link").click();
-    await expect(page).toHaveURL(/\/dashboard\/BNBUSDT\?range=live$/);
+  test("Crypto keeps quotes and other charts usable when one history is unavailable", async ({ page }) => {
+    await page.setViewportSize({width:390,height:844});
+    const fixture=assetFeedFixture();
+    fixture.assets[1].points=[]; fixture.assets[1].historyError="Chart history is temporarily unavailable.";
+    await page.route("**/api/assets?*",route=>route.fulfill({json:fixture}));
+    await page.goto("/markets");
+    await expect(page.getByRole("article",{name:"Bitcoin",exact:true}).getByRole("img")).toBeVisible();
+    await expect(page.getByRole("article",{name:"Ethereum",exact:true})).toContainText("Chart history is temporarily unavailable.");
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await expect(page.getByText("Forecast details",{exact:false})).toHaveCount(0);
   });
 
   test("Monitor page supports range changes, tracked coin search, and prediction history paging", async ({

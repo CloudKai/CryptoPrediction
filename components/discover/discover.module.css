@@ -229,7 +229,7 @@
   .sidebar { padding: 18px 20px 10px; border-right: 0; border-bottom: 1px solid var(--d-border); }
   .brand { font-size: 15px; width: fit-content; }
   .brandMark { width: 28px; }
-  .navigation { margin-top: 21px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .navigation { margin-top: 21px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
   .navLink { justify-content: center; flex-direction: column; gap: 4px; padding: 10px 4px; font-size: 12px; min-height: 60px; }
   .navLink > svg:last-child:not(:first-child) { display: none; }
   .sidebarFooter { display: none; }

@@ -8,7 +8,8 @@ import styles from "./discover.module.css";
 
 const navigation = [
   { label: "Discover", href: "/", icon: "discover" },
-  { label: "Markets", href: "/markets", icon: "markets" },
+  { label: "Crypto", href: "/markets", icon: "markets" },
+  { label: "Stocks", href: "/stocks", icon: "stocks" },
   { label: "Watchlist", href: "/watchlist", icon: "watchlist" },
   { label: "Invested", href: "/invested", icon: "invested" },
 ] as const;

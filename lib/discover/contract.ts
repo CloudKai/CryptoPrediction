@@ -26,6 +26,7 @@ export type CompleteAnalysis = {
   analysisId: string;
   generatedAt: string;
   dataAsOf: string;
+  marketObservations?: { assetId: string; assetClass: "crypto" | "stock"; observedAt: string }[];
   allocations: Allocation[];
   riskSummary: string;
   riskClaim?: SourcedClaim;
@@ -112,9 +113,20 @@ export function parseAnalysis(value: unknown, input: DiscoverInput): AnalysisRes
   }
   if (cents !== input.budgetCents || bps !== 10000)
     return null;
+  const observations = value.marketObservations;
+  if (observations !== undefined) {
+    if (!Array.isArray(observations) || observations.length !== identities.size || new Set(observations.map(row => row?.assetId)).size !== identities.size || observations.some(row => !object(row) || !identities.has(String(row.assetId)) || !["crypto","stock"].includes(String(row.assetClass)) || !timestamp(row.observedAt) || (row.assetClass === "stock") !== /^stock:(us|sg):[A-Z0-9.\-]+$/.test(String(row.assetId)))) return null;
+    const selection = input.assetClass ?? "crypto";
+    if (selection === "stocks" && observations.some(row => row.assetClass !== "stock")) return null;
+    if (selection === "crypto" && observations.some(row => row.assetClass !== "crypto")) return null;
+    if (selection === "both" && !["crypto","stock"].every(kind => observations.some(row => row.assetClass === kind))) return null;
+    if (input.stockMarket && input.stockMarket !== "both" && observations.some(row => row.assetClass === "stock" && !row.assetId.startsWith(`stock:${input.stockMarket}:`))) return null;
+    if (Math.min(...observations.map(row => Date.parse(row.observedAt))) !== Date.parse(value.dataAsOf)) return null;
+  } else if (input.assetClass && input.assetClass !== "crypto") return null;
   return {
     status: "complete", analysisId: value.analysisId, generatedAt: value.generatedAt, dataAsOf: value.dataAsOf,
     riskSummary: value.riskSummary, methodology: value.methodology, limitations: value.limitations,
+    ...(observations ? { marketObservations: observations.map(({assetId,assetClass,observedAt}) => ({assetId,assetClass,observedAt})) } : {}),
     ...(value.riskClaim ? { riskClaim: cleanClaims([value.riskClaim as SourcedClaim])[0], riskEvidence: (value.riskEvidence as Evidence[]).map(cleanSource) } : {}),
     allocations: (value.allocations as Allocation[]).map((asset) => ({
       assetId: asset.assetId, name: asset.name, symbol: asset.symbol, amountCents: asset.amountCents, weightBps: asset.weightBps,
@@ -130,7 +142,11 @@ export function ensureFresh(analysis: AnalysisResponse, now = Date.now()): Analy
   if (analysis.status !== "complete")
     return analysis;
   const generated = Date.parse(analysis.generatedAt), data = Date.parse(analysis.dataAsOf);
-  if (data > now + 60000 || generated > now + 60000 || now - data > MAX_DATA_AGE_MS || now - generated > MAX_DATA_AGE_MS) {
+  const staleObservations = analysis.marketObservations?.some(row => {
+    const observed = Date.parse(row.observedAt);
+    return observed > now+60000 || now-observed > (row.assetClass === "stock" ? 5*86400000 : MAX_DATA_AGE_MS);
+  });
+  if (data > now + 60000 || generated > now + 60000 || (analysis.marketObservations ? staleObservations : now - data > MAX_DATA_AGE_MS) || now - generated > MAX_DATA_AGE_MS) {
     return issue("stale_evidence", "The market evidence is no longer current enough for a new allocation. Please try again for an updated analysis.", true, "incomplete");
   }
   return analysis;

@@ -1,6 +1,6 @@
 # Crypto Prediction Dashboard
 
-Discover is now the default entry page: a grouped budget/profile form with a dedicated allocation-results view. The existing market overview has moved to `/markets`. See [Discover implementation](docs/DISCOVER_IMPLEMENTATION.md) for scope, storage, validation, and the optional allocation-service contract. The specialist pipeline is implemented but stays unavailable until credentials, a reviewed strategy, and a specialist evaluation report are configured. Accounts remain unavailable. See [financial engine](docs/FINANCIAL_ENGINE.md) for calculations, research APIs, release gates, and the evaluation workflow.
+Discover is now the default entry page: a grouped budget/profile form with a dedicated allocation-results view. Crypto browsing lives at `/markets`; US/Singapore stock browsing lives at `/stocks`, each with an activity-ranked top ten, search and small observed-price charts. See [stock and mixed-market implementation](docs/STOCKS_IMPLEMENTATION.md). See [Discover implementation](docs/DISCOVER_IMPLEMENTATION.md) for scope, storage, validation, and the optional allocation-service contract. Experimental Discover uses configured OpenAI access and current evidence for crypto, stock or mixed USD proposals. The separate reviewed fixed-strategy path still requires its policy and evaluation report. Accounts remain unavailable. See [financial engine](docs/FINANCIAL_ENGINE.md) for calculations, research APIs, release gates, and the evaluation workflow.
 
 Full-stack project with:
 
@@ -109,11 +109,13 @@ Copy [`.env.example`](.env.example) to `.env.local` if you do not already have o
 | Variable | Get a free key | Limits |
 | --- | --- | --- |
 | `NEWSDATA_API_KEY` | [NewsData signup](https://newsdata.io/register) | [200 credits/day, 12-hour delay; no full article text](https://newsdata.io/blog/pricing-plan-in-newsdata-io/). Endpoint entitlements apply. |
-| `COINGECKO_DEMO_API_KEY` | [CoinGecko Developers Dashboard](https://www.coingecko.com/en/developers/dashboard) | [10,000 calls/month, 100/minute, 1-year history; attribution required](https://www.coingecko.com/en/api/pricing). For research APIs, not the Markets feed. |
+| `COINGECKO_DEMO_API_KEY` | [CoinGecko Developers Dashboard](https://www.coingecko.com/en/developers/dashboard) | [10,000 calls/month, 100/minute, 1-year history; attribution required](https://www.coingecko.com/en/api/pricing). For crypto browsing and research; it does not provide stock data. |
 
-The Markets backend uses Binance public REST/WebSocket data without a trading API key; access depends on deployment region and upstream terms. Start the backend separately using the commands above. Optional backend overrides are in [`backend/.env.example`](backend/.env.example); load a copied `backend/.env` explicitly with `uvicorn ... --env-file backend/.env`.
+The legacy monitor backend uses Binance public REST/WebSocket data without a trading API key; access depends on deployment region and upstream terms. Start the backend separately using the commands above. Optional backend overrides are in [`backend/.env.example`](backend/.env.example); load a copied `backend/.env` explicitly with `uvicorn ... --env-file backend/.env`.
 
-This free configuration keeps AI recommendations and scenario releases disabled. The existing AI adapter uses [paid OpenAI API inference](https://developers.openai.com/api/docs/pricing), and CoinGecko Demo cannot supply enough history for the current projection checks. `ANALYSIS_ACCESS_TOKEN` is a local secret you generate yourself, not a paid API key. SGX stock providers are not integrated. Free signup does not grant unrestricted public redistribution or AI-processing rights; see the [provider research](docs/research/CRYPTO_AND_STOCK_API_RECOMMENDATION.md) before public deployment.
+This free configuration keeps AI recommendations and scenario releases disabled. The existing AI adapter uses [paid OpenAI API inference](https://developers.openai.com/api/docs/pricing), and CoinGecko Demo cannot supply enough history for the current projection checks. `ANALYSIS_ACCESS_TOKEN` is a local secret you generate yourself, not a paid API key. US/SG stock browsing uses experimental free public Yahoo Finance/SGX adapters without a new stock API key; see [coverage and limitations](docs/STOCKS_IMPLEMENTATION.md). Free signup does not grant unrestricted public redistribution or AI-processing rights; see the [provider research](docs/research/CRYPTO_AND_STOCK_API_RECOMMENDATION.md) before public deployment.
+
+For the optional OpenAI Discover integration, follow [OpenAI setup](docs/OPENAI_DISCOVER_SETUP.md). Run `npm run check:analysis` to identify missing configuration without generating a paid response or printing secrets.
 
 ```bash
 npm install

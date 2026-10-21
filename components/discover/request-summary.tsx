@@ -1,4 +1,4 @@
-import { answerLabel, money, parseAmount, PROFILE_QUESTIONS, type DiscoverDraft } from "@/lib/discover/profile";
+import { ASSET_CLASSES, STOCK_MARKETS, answerLabel, money, parseAmount, PROFILE_QUESTIONS, type DiscoverDraft, type AssetClassSelection, type StockMarket } from "@/lib/discover/profile";
 import styles from "./discover.module.css";
 
 export function RequestSummary({ draft, expanded = false }: { draft: DiscoverDraft; expanded?: boolean }) {
@@ -7,7 +7,8 @@ export function RequestSummary({ draft, expanded = false }: { draft: DiscoverDra
   return <aside className={styles.summary} aria-label="Your request">
     <div className={styles.summaryHeading}><h2>Your request</h2><p>A reflection of your inputs.</p></div>
     <dl className={styles.summaryList}>
-      <div><dt>Market</dt><dd>Cryptocurrency</dd></div>
+      <div><dt>Market</dt><dd>{ASSET_CLASSES[(draft.assetClass ?? "crypto") as AssetClassSelection]}</dd></div>
+      {(draft.assetClass ?? "crypto") !== "crypto" ? <div><dt>Stock markets</dt><dd>{STOCK_MARKETS[(draft.stockMarket ?? "both") as StockMarket]}</dd></div> : null}
       <div><dt>Budget</dt><dd className={styles.numbers}>{amount === null ? <span className={styles.muted}>Not entered</span> : <>{money(amount)} <span className={styles.unit}>USD</span></>}</dd></div>
       <div><dt>Investment profile</dt><dd>{answered === 5 ? "5 of 5 answered" : <span className={styles.muted}>{answered ? `${answered} of 5 answered` : "Not completed"}</span>}</dd></div>
       {expanded ? PROFILE_QUESTIONS.map(({ key, label }) => <div key={key}><dt>{label}</dt><dd>{answerLabel(key, draft[key])}</dd></div>) : null}

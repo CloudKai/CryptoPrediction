@@ -70,6 +70,7 @@ class CandleHistoryResponse(BaseModel):
     symbol: str
     interval: Interval
     candles: list[Candle]
+    observedAt: int | None = None
 
 
 class NewsItem(BaseModel):

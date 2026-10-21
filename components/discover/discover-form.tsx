@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { issue, parseAnalysis } from "@/lib/discover/contract";
-import { draftToInput, EMPTY_DRAFT, MAX_PREFERENCES_LENGTH, money, parseAmount, PROFILE_QUESTIONS, validateDraft, type DiscoverDraft, type FormErrors } from "@/lib/discover/profile";
+import { ASSET_CLASSES, STOCK_MARKETS, draftToInput, EMPTY_DRAFT, MAX_PREFERENCES_LENGTH, money, parseAmount, PROFILE_QUESTIONS, validateDraft, type DiscoverDraft, type FormErrors } from "@/lib/discover/profile";
 import { saveDraft, saveResult, useDraftSnapshot } from "@/lib/discover/storage";
 import { Icon } from "./icons";
 import { RequestSummary } from "./request-summary";
@@ -82,7 +82,9 @@ export function DiscoverForm() {
         {errorEntries.length ? <div ref={errorRef} tabIndex={-1} className={styles.errorSummary} role="alert"><h2>Check {errorEntries.length === 1 ? "one answer" : `${errorEntries.length} answers`} before continuing.</h2><ul>{errorEntries.map(([key, message]) => <li key={key}><a href={`#${key}`}>{key === "amount" ? "Amount" : key === "preferences" ? "Additional preferences" : PROFILE_QUESTIONS.find((q) => q.key === key)?.label}: {message}</a></li>)}</ul></div> : null}
         <fieldset disabled={busy || !ready} className={styles.formFields}>
           <section aria-labelledby="plan-heading" className={styles.formSection}>
-            <div className={styles.sectionHeader}><h2 id="plan-heading">Your investment plan</h2><span>Cryptocurrency</span></div>
+            <div className={styles.sectionHeader}><h2 id="plan-heading">Your investment plan</h2><span>USD budget</span></div>
+            <fieldset className={styles.question} id="assetClass"><legend>What would you like to explore?</legend><div className={styles.radioOptions}>{Object.entries(ASSET_CLASSES).map(([value,label]) => <label key={value} className={`${styles.radioOption} ${(draft.assetClass ?? "crypto") === value ? styles.radioSelected : ""}`}><input type="radio" name="assetClass" value={value} checked={(draft.assetClass ?? "crypto") === value} onChange={() => update("assetClass",value)}/><span>{label}</span></label>)}</div></fieldset>
+            {(draft.assetClass ?? "crypto") !== "crypto" ? <fieldset className={styles.question} id="stockMarket"><legend>Stock markets</legend><div className={styles.radioOptions}>{Object.entries(STOCK_MARKETS).map(([value,label]) => <label key={value} className={`${styles.radioOption} ${(draft.stockMarket ?? "both") === value ? styles.radioSelected : ""}`}><input type="radio" name="stockMarket" value={value} checked={(draft.stockMarket ?? "both") === value} onChange={() => update("stockMarket",value)}/><span>{label}</span></label>)}</div><p className={styles.fieldHelp}>Budget amounts stay in USD. Singapore stock prices are quoted in SGD. Suggestions do not execute trades.</p></fieldset> : null}
             <label className={styles.fieldLabel} htmlFor="amount">Amount to allocate <span className={styles.requiredText}>(required)</span></label>
             <div className={`${styles.amountField} ${errors.amount ? styles.invalidField : ""}`}><span aria-hidden="true">USD</span><input id="amount" name="amount" inputMode="decimal" autoComplete="off" placeholder="1,000.00" value={draft.amount} onChange={(event) => update("amount", event.target.value)} aria-invalid={Boolean(errors.amount)} aria-describedby={`amount-help${errors.amount ? " amount-error" : ""}`} maxLength={30} /></div>
             <p id="amount-help" className={styles.fieldHelp}>Guests use USD. Sign-in and currency settings are not available yet.</p>

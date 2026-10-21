@@ -18,7 +18,7 @@ The creator also intends to demonstrate useful, dependable full-stack product en
 
 Help users turn an investment budget and stated preferences into an understandable, evidence-backed allocation proposal, then separately review investments they have actually recorded. Success means users can understand the suggested distribution, its reasons and risks, and the distinction between current value, historical gains, and future scenarios.
 
-Cryptocurrency support comes first. Stocks and a choice of markets are a future expansion, not a current capability.
+As of 22 October 2026, separate Crypto and Stocks tabs show activity-ranked top-ten lists with search and small charts; Stocks supports US and Singapore filters. Experimental Discover accepts crypto, stocks, or both. Free public stock adapters may be delayed or unavailable; coverage and validation limits are documented in docs/STOCKS_IMPLEMENTATION.md. Stock trading, forecasts and accounts are not implied by this addition.
 
 ## Positioning
 

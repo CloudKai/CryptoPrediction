@@ -111,7 +111,7 @@ components:
 
 The confirmed direction is a calm, clean investing interface: cool neutral surfaces, charcoal text, legible conventional controls, and concise explanations. A restrained grey-green accent identifies actions and selected controls. The visual system supports a beginner completing a form and inspecting its outcome with progressively disclosed evidence.
 
-This record describes the implemented Discover shell and the surfaces that use `components/discover/discover.module.css`, including its request, results, and local saved-proposal patterns. It is an approved replacement world within that boundary. Existing dark Markets and monitor pages remain legacy outside this scope; their global palette, glow, gradients, and fonts are not transformed by this document. Other routes using the Discover shell inherit its visual primitives without implying completed account or investment capabilities.
+This record describes the implemented Discover shell and the surfaces that use `components/discover/discover.module.css`, including its request, results, and local saved-proposal patterns. It is an approved replacement world within that boundary. Markets now extends this shell with small observed-price charts and on-demand forecast disclosures. Individual dark monitor pages remain legacy outside this scope; their global palette, glow, gradients, and fonts are not transformed by this document. Other routes using the Discover shell inherit its visual primitives without implying completed account or investment capabilities.
 
 Source authority is the current Discover stylesheet and components. The selected code-led reference is `.impeccable/mocks/decision/canon.html`; desktop, mobile, unavailable, and synthetic results/evidence screenshots in `.impeccable/review/` corroborate the layout. Those screenshots are review evidence, not shipping raster assets or live financial analysis. Current source and refreshed screenshots show sign-in and currency settings as unavailable, without a redundant issue eyebrow.
 
@@ -219,7 +219,7 @@ Pending requests use a subdued notice, pulsing dot, status text, and cancel acti
 
 ### Don't:
 
-- **Don't** infer that legacy Markets and monitor pages have adopted this visual system.
+- **Don't** infer that individual legacy monitor pages have adopted this visual system; Markets uses the shared Discover shell.
 - **Don't** carry legacy dark gradients, glass panels, or glow into the scoped Discover surfaces.
 - **Don't** imply that account settings, live allocation analysis, or numerical recommendations exist when the build reports them unavailable.
 - **Don't** ship review screenshots or synthetic allocation records as product imagery or financial evidence.

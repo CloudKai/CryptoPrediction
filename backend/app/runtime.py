@@ -120,6 +120,7 @@ class MarketRuntime:
         self.hub = WebSocketHub()
 
         self._candle_buffers: dict[tuple[str, Interval], deque[Candle]] = {}
+        self._candle_received_at: dict[tuple[str, Interval], int] = {}
         self._latest_predictions: dict[tuple[str, Interval], Prediction] = {}
         self._prediction_history: dict[tuple[str, Interval], deque[PredictionHistoryEntry]] = {}
         self._timed_forecasts: dict[str, TimedLockedForecast] = {}
@@ -224,6 +225,7 @@ class MarketRuntime:
                 symbol, interval, candles = result
                 key = self._key(symbol, interval)
                 self._candle_buffers[key] = deque(candles, maxlen=MAX_RUNTIME_CANDLES)
+                self._candle_received_at[key] = int(datetime.now(UTC).timestamp() * 1000)
                 self._prediction_history.setdefault(
                     key,
                     deque(maxlen=self.settings.prediction_history_limit),
@@ -377,6 +379,7 @@ class MarketRuntime:
         async with self._state_lock:
             key = self._key(symbol, interval)
             buffer = self._candle_buffers.setdefault(key, deque(maxlen=MAX_RUNTIME_CANDLES))
+            self._candle_received_at[key] = int(datetime.now(UTC).timestamp() * 1000)
             if buffer and buffer[-1].time == candle.time:
                 # Same candle still forming: replace latest values.
                 buffer[-1] = candle
@@ -472,7 +475,12 @@ class MarketRuntime:
         key = self._key(symbol, interval)
         async with self._state_lock:
             candles = list(self._candle_buffers.get(key, []))
-        if len(candles) < safe_limit:
+            received_at = self._candle_received_at.get(key, 0)
+        # A disconnected WebSocket must not freeze otherwise full REST buffers.
+        now_ms = int(datetime.now(UTC).timestamp() * 1000)
+        stale = (not candles or now_ms - received_at > 15_000
+                 or now_ms - candles[-1].time > INTERVAL_TO_SECONDS[interval] * 2000)
+        if len(candles) < safe_limit or stale:
             candles = await self.binance.fetch_klines_paginated(
                 symbol=symbol,
                 interval=interval,
@@ -480,7 +488,12 @@ class MarketRuntime:
             )
             async with self._state_lock:
                 self._candle_buffers[key] = deque(candles, maxlen=MAX_RUNTIME_CANDLES)
+                self._candle_received_at[key] = int(datetime.now(UTC).timestamp() * 1000)
         return candles[-safe_limit:]
+
+    def market_observed_at(self, symbol: str, interval: Interval) -> int | None:
+        """When the cached source last updated, not when a browser requested it."""
+        return self._candle_received_at.get(self._key(symbol, interval))
 
     async def get_latest_prediction(self, symbol: str, interval: Interval) -> Prediction:
         """Return cached prediction, or compute one if missing."""

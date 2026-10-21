@@ -7,6 +7,8 @@ Business logic (state, inference, streaming) lives in runtime.py.
 """
 
 from contextlib import asynccontextmanager
+import asyncio
+import time
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import load_settings
 from backend.app.constants import Interval
 from backend.app.news import CryptoNewsService
+from backend.app.hourly_outlook import METHOD, outlook
 from backend.app.runtime import MarketRuntime
 from backend.app.schemas import (
     CandleHistoryResponse,
@@ -26,6 +29,9 @@ from backend.app.schemas import (
 settings = load_settings()
 runtime = MarketRuntime(settings=settings)
 news_service = CryptoNewsService()
+# Bound by the configured symbol catalog; one in-flight computation per symbol.
+outlook_cache: dict[str, tuple[int, dict]] = {}
+outlook_locks: dict[str, asyncio.Lock] = {}
 
 
 @asynccontextmanager
@@ -87,7 +93,8 @@ async def get_market_history(
     resolved_limit = runtime.resolve_history_limit(limit, range)
     normalized_symbol = runtime.validate_symbol(symbol)
     candles = await runtime.get_market_history(normalized_symbol, normalized_interval, resolved_limit)
-    return CandleHistoryResponse(symbol=normalized_symbol, interval=normalized_interval, candles=candles)
+    return CandleHistoryResponse(symbol=normalized_symbol, interval=normalized_interval, candles=candles,
+                                 observedAt=runtime.market_observed_at(normalized_symbol, normalized_interval))
 
 
 @app.get("/api/prediction/{symbol}", response_model=PredictionResponse)
@@ -101,6 +108,28 @@ async def get_prediction(
     normalized_symbol = runtime.validate_symbol(symbol)
     prediction = await runtime.get_latest_prediction(normalized_symbol, normalized_interval)
     return PredictionResponse(prediction=prediction)
+
+
+@app.get("/api/market/{symbol}/outlook")
+async def get_hourly_outlook(symbol: str):
+    symbol = runtime.validate_symbol(symbol)
+    lock = outlook_locks.setdefault(symbol, asyncio.Lock())
+    async with lock:
+        hour = int(time.time() // 3600)
+        cached = outlook_cache.get(symbol)
+        if cached and cached[0] == hour:
+            return cached[1]
+        try:
+            # Dedicated history: never relabel 15m predictions as hourly forecasts.
+            candles = await runtime.binance.fetch_klines_paginated(symbol, "1h", 2000)
+            forecasts = await asyncio.to_thread(outlook, candles, int(time.time() * 1000))
+        except Exception as error:
+            raise HTTPException(status_code=503, detail="Hourly forecast data is unavailable.") from error
+        result = {"symbol": symbol, "method": METHOD, "forecasts": forecasts}
+        # Bad/stale input can recover within this hour; do not cache transient failure.
+        if all("evaluation" in forecast for forecast in forecasts):
+            outlook_cache[symbol] = (hour, result)
+        return result
 
 
 @app.get("/api/prediction/{symbol}/history", response_model=PredictionHistoryResponse)

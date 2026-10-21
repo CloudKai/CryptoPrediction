@@ -66,3 +66,25 @@ test("preserves verifiable claim references and portfolio-risk sources", () => {
   expect(parseAnalysis(sourced, validInput)).toMatchObject({ riskClaim: sourced.riskClaim, riskEvidence: sourced.riskEvidence });
   expect(parseAnalysis({ ...sourced, riskClaim: { text: result.riskSummary, evidenceIds: ["invented"] } }, validInput)).toBeNull();
 });
+
+test("accepts dated stock sessions but never relaxes crypto freshness in a mixed proposal", () => {
+  const now=Date.now(), result=completeFixture();
+  const stock=result.allocations[1]; stock.assetId="stock:sg:D05";
+  const observations=result.allocations.map(row=>({assetId:row.assetId,assetClass:row===stock?"stock" as const:"crypto" as const,observedAt:new Date(now-(row===stock?2*86400000:60000)).toISOString()}));
+  const mixed={...result,dataAsOf:observations[1].observedAt,marketObservations:observations};
+  const input={...validInput,assetClass:"both" as const,stockMarket:"both" as const};
+  const parsed=parseAnalysis(mixed,input);
+  expect(parsed?.status).toBe("complete");
+  expect(ensureFresh(parsed!,now).status).toBe("complete");
+  observations[0].observedAt=new Date(now-20*60000).toISOString();
+  expect(ensureFresh(parseAnalysis(mixed,input)!,now).status).toBe("incomplete");
+  expect(parseAnalysis({...mixed,marketObservations:undefined},input)).toBeNull();
+  expect(parseAnalysis(mixed,{...input,stockMarket:"us"})).toBeNull();
+});
+
+test("preserves asset and stock market selections through the API and stored drafts", () => {
+  const input={...validInput,assetClass:"both" as const,stockMarket:"sg" as const};
+  expect(parseInput(input)).toEqual(input);
+  expect(parseInput({...input,assetClass:"bonds"})).toBeNull();
+  expect(parseInput({...input,stockMarket:"invented"})).toBeNull();
+});

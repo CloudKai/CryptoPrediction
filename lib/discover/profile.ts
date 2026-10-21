@@ -17,11 +17,15 @@ export const PROFILE_QUESTIONS = [
 ] as const;
 
 export type ProfileKey = (typeof PROFILE_QUESTIONS)[number]["key"];
-export type DiscoverDraft = Record<ProfileKey, string> & { amount: string; preferences: string };
-export type DiscoverInput = { budgetCents: number; currency: "USD"; preferences: string; profile: Record<ProfileKey, string> };
-export type FormErrors = Partial<Record<ProfileKey | "amount" | "preferences", string>>;
+export const ASSET_CLASSES = { crypto: "Crypto", stocks: "Stocks", both: "Crypto + stocks" } as const;
+export const STOCK_MARKETS = { us: "US", sg: "Singapore", both: "US + Singapore" } as const;
+export type AssetClassSelection = keyof typeof ASSET_CLASSES;
+export type StockMarket = keyof typeof STOCK_MARKETS;
+export type DiscoverDraft = Record<ProfileKey, string> & { amount: string; preferences: string; assetClass?: string; stockMarket?: string };
+export type DiscoverInput = { budgetCents: number; currency: "USD"; preferences: string; profile: Record<ProfileKey, string>; assetClass?: AssetClassSelection; stockMarket?: StockMarket };
+export type FormErrors = Partial<Record<ProfileKey | "amount" | "preferences" | "assetClass" | "stockMarket", string>>;
 
-export const EMPTY_DRAFT: DiscoverDraft = { amount: "", preferences: "", horizon: "", capacity: "", reaction: "", experience: "", holdings: "" };
+export const EMPTY_DRAFT: DiscoverDraft = { amount: "", preferences: "", horizon: "", capacity: "", reaction: "", experience: "", holdings: "", assetClass: "crypto", stockMarket: "both" };
 export const MAX_BUDGET_CENTS = 99_999_999_999;
 export const MAX_PREFERENCES_LENGTH = 1_000;
 export const ANALYSIS_LIMITS = { totalTokens: 15_000, explanationTokens: 1_500 } as const;
@@ -40,6 +44,8 @@ export function parseAmount(value: string): number | null {
 
 export function validateDraft(draft: DiscoverDraft): FormErrors {
   const errors: FormErrors = {};
+  if (draft.assetClass !== undefined && !Object.hasOwn(ASSET_CLASSES, draft.assetClass)) errors.assetClass = "Choose Crypto, Stocks, or Crypto + stocks.";
+  if (draft.stockMarket !== undefined && !Object.hasOwn(STOCK_MARKETS, draft.stockMarket)) errors.stockMarket = "Choose US, Singapore, or US + Singapore.";
   if (parseAmount(draft.amount) === null) errors.amount = `Enter a USD amount from $0.01 to ${money(MAX_BUDGET_CENTS)}, with at most two decimal places.`;
   if (draft.preferences.length > MAX_PREFERENCES_LENGTH) errors.preferences = `Keep additional preferences to ${MAX_PREFERENCES_LENGTH.toLocaleString()} characters.`;
   for (const question of PROFILE_QUESTIONS) {
@@ -51,7 +57,7 @@ export function validateDraft(draft: DiscoverDraft): FormErrors {
 export function draftToInput(draft: DiscoverDraft): DiscoverInput | null {
   const budgetCents = parseAmount(draft.amount);
   if (budgetCents === null || Object.keys(validateDraft(draft)).length) return null;
-  return { budgetCents, currency: "USD", preferences: draft.preferences.trim(), profile: Object.fromEntries(PROFILE_QUESTIONS.map(({ key }) => [key, draft[key]])) as Record<ProfileKey, string> };
+  return { budgetCents, currency: "USD", preferences: draft.preferences.trim(), profile: Object.fromEntries(PROFILE_QUESTIONS.map(({ key }) => [key, draft[key]])) as Record<ProfileKey, string>, ...(draft.assetClass !== undefined ? { assetClass: draft.assetClass as AssetClassSelection } : {}), ...(draft.stockMarket !== undefined ? { stockMarket: draft.stockMarket as StockMarket } : {}) };
 }
 
 export function parseDraft(value: unknown): DiscoverDraft | null {
@@ -60,14 +66,16 @@ export function parseDraft(value: unknown): DiscoverDraft | null {
   const keys = ["amount", "preferences", ...PROFILE_QUESTIONS.map(({ key }) => key)] as const;
   if (keys.some((key) => typeof record[key] !== "string")) return null;
   if ((record.amount as string).length > 40 || (record.preferences as string).length > MAX_PREFERENCES_LENGTH) return null;
-  return Object.fromEntries(keys.map((key) => [key, record[key]])) as DiscoverDraft;
+  if (record.assetClass !== undefined && (typeof record.assetClass !== "string" || !Object.hasOwn(ASSET_CLASSES, record.assetClass))) return null;
+  if (record.stockMarket !== undefined && (typeof record.stockMarket !== "string" || !Object.hasOwn(STOCK_MARKETS, record.stockMarket))) return null;
+  return { ...Object.fromEntries(keys.map((key) => [key, record[key]])), ...(record.assetClass !== undefined ? { assetClass: record.assetClass } : {}), ...(record.stockMarket !== undefined ? { stockMarket: record.stockMarket } : {}) } as DiscoverDraft;
 }
 
 export function parseInput(value: unknown): DiscoverInput | null {
   if (!value || typeof value !== "object") return null;
   const record = value as Partial<DiscoverInput>;
   if (record.currency !== "USD" || !Number.isSafeInteger(record.budgetCents) || !record.budgetCents || record.budgetCents > MAX_BUDGET_CENTS || record.budgetCents < 1 || typeof record.preferences !== "string" || !record.profile) return null;
-  const draft = { ...record.profile, amount: (record.budgetCents / 100).toFixed(2), preferences: record.preferences };
+  const draft = { ...record.profile, amount: (record.budgetCents / 100).toFixed(2), preferences: record.preferences, assetClass: record.assetClass, stockMarket: record.stockMarket };
   const parsed = parseDraft(draft);
   return parsed ? draftToInput(parsed) : null;
 }

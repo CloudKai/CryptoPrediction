@@ -1,12 +1,8 @@
 import { DiscoverShell } from "@/components/discover/shell";
-import { Markets } from "@/components/markets/markets";
-import { DEFAULT_CHART_RANGE } from "@/lib/constants";
-import { parseChartRange } from "@/lib/utils";
+import { AssetBrowser } from "@/components/markets/asset-browser";
 
-export default async function MarketsPage({ searchParams }: { searchParams: Promise<{ range?: string; interval?: string }> }) {
-  const query = await searchParams;
-  const range = parseChartRange(query.range ?? query.interval);
-  return <DiscoverShell title="Markets"><Markets range={range ?? DEFAULT_CHART_RANGE} /></DiscoverShell>;
+export default function MarketsPage() {
+  return <DiscoverShell title="Crypto"><AssetBrowser kind="crypto" /></DiscoverShell>;
 }
 
-export const metadata = { title: "Markets · Crypto Prediction" };
+export const metadata = { title: "Crypto · Crypto Prediction" };

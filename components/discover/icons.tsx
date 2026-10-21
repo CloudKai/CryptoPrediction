@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
 
-export function Icon({ name, size = 20, style }: { name: "discover" | "markets" | "watchlist" | "invested" | "user" | "arrow" | "back" | "check" | "info" | "external" | "lock" | "chevron" | "close"; size?: number; style?: CSSProperties }) {
+export function Icon({ name, size = 20, style }: { name: "discover" | "markets" | "stocks" | "watchlist" | "invested" | "user" | "arrow" | "back" | "check" | "info" | "external" | "lock" | "chevron" | "close"; size?: number; style?: CSSProperties }) {
   const paths = {
     discover: <><circle cx="12" cy="12" r="8.5" /><path d="m15.7 8.3-2 5.4-5.4 2 2-5.4z" /></>,
     markets: <><path d="M4 19V5M4 19h16M8 14l4-5 4 3 4-7" /></>,
+    stocks: <><path d="m3 9 9-5 9 5H3ZM5 20h14M7 10v7m5-7v7m5-7v7" /></>,
     watchlist: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z" />,
     invested: <><rect x="3.5" y="7" width="17" height="13" rx="2" /><path d="M8 7V4h8v3M3.5 12h17M10 12v3h4v-3" /></>,
     user: <><circle cx="12" cy="8" r="3" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></>,
