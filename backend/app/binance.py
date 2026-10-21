@@ -12,8 +12,8 @@ from typing import Any
 import httpx
 import websockets
 
-from backend.app.constants import INTERVAL_TO_SECONDS, Interval
-from backend.app.schemas import Candle
+from .constants import INTERVAL_TO_SECONDS, Interval
+from .schemas import Candle
 
 
 def _kline_to_candle(kline: list[Any]) -> Candle:

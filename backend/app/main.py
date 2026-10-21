@@ -8,17 +8,18 @@ Business logic (state, inference, streaming) lives in runtime.py.
 
 from contextlib import asynccontextmanager
 import asyncio
+import os
 import time
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.config import load_settings
-from backend.app.constants import Interval
-from backend.app.news import CryptoNewsService
-from backend.app.hourly_outlook import METHOD, outlook
-from backend.app.runtime import MarketRuntime
-from backend.app.schemas import (
+from .config import load_settings
+from .constants import Interval
+from .news import CryptoNewsService
+from .hourly_outlook import METHOD, outlook
+from .runtime import MarketRuntime
+from .schemas import (
     CandleHistoryResponse,
     CoinsResponse,
     NewsResponse,
@@ -37,7 +38,11 @@ outlook_locks: dict[str, asyncio.Lock] = {}
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Start background services when API boots, stop them on shutdown."""
-    await runtime.startup()
+    if os.getenv("VERCEL") == "1":
+        # Functions serve on-demand HTTP requests; no persistent background worker.
+        runtime.model_store.load(settings.tracked_symbols, settings.tracked_intervals)
+    else:
+        await runtime.startup()
     try:
         yield
     finally:

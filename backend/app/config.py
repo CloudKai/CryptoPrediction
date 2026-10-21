@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend.app.constants import (
+from .constants import (
     DEFAULT_INTERVAL,
     DEFAULT_SYMBOL,
     SUPPORTED_INTERVALS,
@@ -85,7 +85,6 @@ def load_settings() -> Settings:
     tracked_symbols = _to_csv("TRACKED_SYMBOLS", default_symbols)
     tracked_intervals = _to_intervals("TRACKED_INTERVALS", list(SUPPORTED_INTERVALS))
     artifacts_dir = Path(__file__).resolve().parents[1] / "artifacts"
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
 
     return Settings(
         binance_rest_base_url=os.getenv("BINANCE_REST_BASE_URL", "https://api.binance.com").strip()

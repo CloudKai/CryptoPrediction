@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from backend.app.schemas import Candle
+from .schemas import Candle
 
 FEATURE_NAMES: tuple[str, ...] = (
     "ret_1",

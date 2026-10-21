@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from backend.app.schemas import NewsItem
+from .schemas import NewsItem
 
 NEWS_API_URL = "https://cryptocurrency.cv/api/news"
 ALLOWED_NEWS_HOSTS = {"cryptocurrency.cv", "www.cryptocurrency.cv"}

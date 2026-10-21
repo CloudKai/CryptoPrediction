@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-from backend.app.features import FEATURE_NAMES
+from .features import FEATURE_NAMES
 
 
 @dataclass(frozen=True)

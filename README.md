@@ -124,6 +124,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Deploy with Vercel services
+
+The root [`vercel.json`](vercel.json) deploys Next.js as the public `app` service and FastAPI as the internal `backend` service. Next.js retains `/api/*` ownership and calls Python through the Vercel-injected `BACKEND_URL` binding; do not set that variable manually.
+
+Run `npx vercel@latest dev -L` from the repository root to test both services locally. Stop any separate Next.js dev server first. Configure private data/AI keys in Vercel's project environment settings and leave `NEXT_PUBLIC_WS_URL` unset for this HTTP deployment. See [deployment setup, validation and runtime limitations](docs/VERCEL_DEPLOYMENT.md).
+
 ## Validation
 
 ```bash
@@ -140,7 +146,7 @@ python3 -m compileall backend
 ## Architecture Notes
 
 - Reusable domain types live in `types/market.ts`.
-- Frontend routes are backend-only: if `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_WS_URL` are missing, the UI shows a `No data` setup message instead of falling back to mock data.
+- Legacy monitor routes use the runtime `BACKEND_URL` service binding, or `BACKEND_API_BASE_URL` in standalone local development. A missing connection shows a setup message rather than mock data. Discover, asset browsing and portfolio routes remain in Next.js.
 - `/api/crypto-news` uses a server-only NewsData key, writes a generated JSON cache at `data/news-cache.json`, and refreshes upstream on a 12-hour window to reduce credit usage. Runtime caches and test output are excluded from Git.
 - Frontend hooks (`hooks/`) orchestrate snapshot loading + live stream reconciliation.
 - Stream transport is swappable (`lib/stream/adapter.ts`):

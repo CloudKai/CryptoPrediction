@@ -10,7 +10,7 @@ import math
 
 import numpy as np
 
-from backend.app.schemas import Candle
+from .schemas import Candle
 
 HORIZONS = (1, 5, 10)
 HOUR = 3_600_000

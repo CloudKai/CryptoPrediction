@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { backendApiBaseUrl } from "./backend-config";
 
 function buildBackendUrl(pathname: string, searchParams?: URLSearchParams) {
-  const base = process.env.BACKEND_API_BASE_URL?.trim();
+  const base = backendApiBaseUrl();
   if (!base) return null;
 
-  const url = new URL(pathname, base.endsWith("/") ? base : `${base}/`);
+  // Bindings may contain a routing prefix. Resolve relative to that base instead
+  // of discarding it with an origin-absolute "/api/..." URL.
+  const url = new URL(pathname.replace(/^\/+/, ""), base.endsWith("/") ? base : `${base}/`);
   if (searchParams && searchParams.toString()) {
     url.search = searchParams.toString();
   }
@@ -19,6 +22,7 @@ export async function maybeProxyRequest(pathname: string, searchParams?: URLSear
     const backendResponse = await fetch(targetUrl, {
       method: "GET",
       cache: "no-store",
+      signal: AbortSignal.timeout(30_000),
       headers: {
         Accept: "application/json",
       },
@@ -32,11 +36,11 @@ export async function maybeProxyRequest(pathname: string, searchParams?: URLSear
         "Cache-Control": "no-store",
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         error: "Backend proxy error",
-        message: error instanceof Error ? error.message : "Unknown proxy error",
+        message: "The market backend could not be reached. Please try again shortly.",
       },
       {
         status: 502,

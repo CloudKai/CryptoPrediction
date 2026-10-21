@@ -7,7 +7,7 @@ Field names intentionally match the existing Next.js frontend TypeScript types.
 
 from pydantic import BaseModel, Field
 
-from backend.app.constants import Interval, ModelStatus, PredictionDirection
+from .constants import Interval, ModelStatus, PredictionDirection
 
 
 class Candle(BaseModel):

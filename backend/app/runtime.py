@@ -10,6 +10,7 @@ Responsibilities:
 """
 
 import asyncio
+import os
 from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -17,9 +18,9 @@ from typing import Any
 
 from fastapi import HTTPException, WebSocket
 
-from backend.app.binance import BinanceClient
-from backend.app.config import Settings
-from backend.app.constants import (
+from .binance import BinanceClient
+from .config import Settings
+from .constants import (
     CHART_RANGE_TO_HISTORY_LIMIT,
     CHART_RANGE_TO_INTERVAL,
     DEFAULT_CHART_RANGE,
@@ -31,9 +32,9 @@ from backend.app.constants import (
     SUPPORTED_CHART_RANGES,
     TRACKED_COINS,
 )
-from backend.app.features import build_latest_feature
-from backend.app.model_store import ModelStore
-from backend.app.schemas import (
+from .features import build_latest_feature
+from .model_store import ModelStore
+from .schemas import (
     Candle,
     CoinResponseItem,
     Prediction,
@@ -499,8 +500,11 @@ class MarketRuntime:
         """Return cached prediction, or compute one if missing."""
         symbol = self.validate_symbol(symbol)
         key = self._key(symbol, interval)
+        if os.getenv("VERCEL") == "1":
+            # Warm function instances may outlive a candle: refresh by request.
+            await self.get_market_history(symbol, interval, self.settings.model_min_candles)
         async with self._state_lock:
-            prediction = self._latest_predictions.get(key)
+            prediction = self._latest_predictions.get(key) if os.getenv("VERCEL") != "1" else None
             if prediction:
                 return prediction
             self._prediction_history.setdefault(key, deque(maxlen=self.settings.prediction_history_limit))

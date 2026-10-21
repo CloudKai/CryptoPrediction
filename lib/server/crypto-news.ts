@@ -1,13 +1,18 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import type { CryptoNewsProxyResponse, NewsItem } from "@/types/market";
 
 const MARKET_URL = "https://newsdata.io/api/1/market";
 const CRYPTO_URL = "https://newsdata.io/api/1/crypto";
 const TECH_URL = "https://newsdata.io/api/1/latest";
-const STORE_DIR = path.join(process.cwd(), "data");
+// Function bundles are read-only. Scratch cache is local to each warm instance;
+// it is intentionally not a durable or globally shared news store.
+const STORE_DIR = process.env.VERCEL === "1"
+  ? path.join(tmpdir(), "crypto-prediction-news")
+  : path.join(process.cwd(), "data");
 const STORE_FILE = path.join(STORE_DIR, "news-cache.json");
 
 const REFRESH_INTERVAL_MS = 12 * 60 * 60 * 1000;

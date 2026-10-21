@@ -6,8 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
-from backend.app.constants import Interval
-from backend.app.modeling import load_artifact, predict_probability
+from .constants import Interval
+from .modeling import load_artifact, predict_probability
 
 
 class ModelStore:

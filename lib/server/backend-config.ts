@@ -4,7 +4,12 @@ const FRONTEND_ENV_FILE = ".env.local";
 const BACKEND_ENTRYPOINT = "backend/app/main.py";
 
 export function hasBackendApiBaseUrl() {
-  return Boolean(process.env.BACKEND_API_BASE_URL?.trim());
+  return Boolean(backendApiBaseUrl());
+}
+
+/** Vercel injects BACKEND_URL at function runtime. Never supply it manually. */
+export function backendApiBaseUrl() {
+  return process.env.BACKEND_URL?.trim() || process.env.BACKEND_API_BASE_URL?.trim() || null;
 }
 
 export function hasFrontendWsUrl() {
