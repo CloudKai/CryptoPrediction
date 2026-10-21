@@ -104,6 +104,17 @@ types/
 
 ## Local Setup
 
+Copy [`.env.example`](.env.example) to `.env.local` if you do not already have one. The template includes local backend URLs and blank fields for these free-tier keys:
+
+| Variable | Get a free key | Limits |
+| --- | --- | --- |
+| `NEWSDATA_API_KEY` | [NewsData signup](https://newsdata.io/register) | [200 credits/day, 12-hour delay; no full article text](https://newsdata.io/blog/pricing-plan-in-newsdata-io/). Endpoint entitlements apply. |
+| `COINGECKO_DEMO_API_KEY` | [CoinGecko Developers Dashboard](https://www.coingecko.com/en/developers/dashboard) | [10,000 calls/month, 100/minute, 1-year history; attribution required](https://www.coingecko.com/en/api/pricing). For research APIs, not the Markets feed. |
+
+The Markets backend uses Binance public REST/WebSocket data without a trading API key; access depends on deployment region and upstream terms. Start the backend separately using the commands above. Optional backend overrides are in [`backend/.env.example`](backend/.env.example); load a copied `backend/.env` explicitly with `uvicorn ... --env-file backend/.env`.
+
+This free configuration keeps AI recommendations and scenario releases disabled. The existing AI adapter uses [paid OpenAI API inference](https://developers.openai.com/api/docs/pricing), and CoinGecko Demo cannot supply enough history for the current projection checks. `ANALYSIS_ACCESS_TOKEN` is a local secret you generate yourself, not a paid API key. SGX stock providers are not integrated. Free signup does not grant unrestricted public redistribution or AI-processing rights; see the [provider research](docs/research/CRYPTO_AND_STOCK_API_RECOMMENDATION.md) before public deployment.
+
 ```bash
 npm install
 npm run dev
@@ -128,7 +139,7 @@ python3 -m compileall backend
 
 - Reusable domain types live in `types/market.ts`.
 - Frontend routes are backend-only: if `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_WS_URL` are missing, the UI shows a `No data` setup message instead of falling back to mock data.
-- `/api/crypto-news` uses a server-only NewsData key, writes a local CSV cache at `data/crypto-news.csv`, and only refreshes upstream on a 12-hour window to reduce credit usage.
+- `/api/crypto-news` uses a server-only NewsData key, writes a generated JSON cache at `data/news-cache.json`, and refreshes upstream on a 12-hour window to reduce credit usage. Runtime caches and test output are excluded from Git.
 - Frontend hooks (`hooks/`) orchestrate snapshot loading + live stream reconciliation.
 - Stream transport is swappable (`lib/stream/adapter.ts`):
   - stays disconnected until `NEXT_PUBLIC_WS_URL` is configured

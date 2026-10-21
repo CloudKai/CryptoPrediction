@@ -12,6 +12,18 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/.playwright-cli/
+/output/
+
+# local agent tooling and design exploration (tracked design records stay tracked)
+/.agents/
+/.codex/
+/.impeccable/live/
+/.impeccable/review/
+/.impeccable/reference/
+/.impeccable/mocks/
 
 # next.js
 /.next/
@@ -39,9 +51,12 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!/.env.example
+!/backend/.env.example
 
 # local news cache
 /data/crypto-news.csv
+/data/news-cache.json
 
 # vercel
 .vercel
